@@ -1,36 +1,97 @@
 # FOODIE Supabase backend
 
-This branch adds the database foundation, row-level security, food-image storage policies, JWT-authenticated companion Edge Function, and browser helpers for Tamil/Telugu speech.
+FOODIE is connected to the Supabase project used by the application. The schema and migrations are applied, and the current feature branch connects the existing React screens to shared data.
 
-## Create the Supabase project
+## Project configuration
 
-1. Create a Supabase project.
-2. Copy the Project URL and publishable/anon key into .env.local using .env.example.
-3. Never put the service_role key or AI provider key in a VITE_ variable or browser code.
-4. Install the Supabase CLI and sign in.
+- Project ref: `njuxgtacizzgwqymtcbc`
+- Project URL: `https://njuxgtacizzgwqymtcbc.supabase.co`
+- Region: Singapore
+- Frontend environment variables are configured in the Vercel project for Production, Preview and Development:
+  - `VITE_SUPABASE_URL`
+  - `VITE_SUPABASE_ANON_KEY` (Supabase publishable key)
+- Never expose a `service_role` key or AI provider key in a `VITE_` variable, browser code, Git, or chat.
 
-Commands: supabase login; supabase link --project-ref YOUR_PROJECT_REF; supabase db push.
+For local development, copy `.env.example` to `.env.local` and set the same two public values. The Vercel environment variables do not automatically populate a developer's local machine.
 
-The ordered migrations create profiles, food listings, requests, saved listings, companion conversations/messages, private profile policies, non-recursive RLS helpers, inventory guards, transactional reservation/cancellation/collection handling, discovery RPC and the food-images bucket. Run `supabase db push` only after reviewing the SQL in `supabase/migrations/`.
+## Applied database migrations
 
-## Configure the AI companion
+The live project has migrations 001–008 applied:
 
-Set Supabase secrets: AI_API_KEY, AI_BASE_URL (default https://api.openai.com/v1), AI_MODEL (default gpt-4o-mini), APP_ORIGIN (your deployed domain). Then deploy with: supabase functions deploy food-companion.
+1. Core profiles, listings, requests, saved listings, companion history, storage bucket and RPCs.
+2. RLS hardening and reservation guards.
+3. Reservation cancellation/rejection/collection lifecycle.
+4. Collected inventory accounting and discovery RPC.
+5. Non-recursive RLS helper functions.
+6. Move internal helper functions to the private schema and protect profile roles.
+7. Organisation signup metadata and accepted-request contact exchange.
+8. RLS policy and foreign-key index optimization.
 
-The function uses an OpenAI-compatible chat-completions endpoint. Choose an AI provider/model and add its key only as a Supabase secret. Supabase JWT verification is enabled and the function validates the bearer token through Auth. Live listings are queried before the model responds.
+Use the Supabase CLI for future changes after reviewing the SQL:
 
-## Auth and voice
+```bash
+supabase login
+supabase link --project-ref njuxgtacizzgwqymtcbc
+supabase db push
+```
 
-Supabase Auth issues signed JWT access tokens and refresh tokens; the app validates the signed-in session through Supabase Auth rather than implementing a second custom password/JWT system. Enable email/password, set production Site URL and redirect URLs in Authentication > URL Configuration. Voice uses browser speech recognition/synthesis with ta-IN and te-IN locale hints. Actual language recognition and voice availability depends on browser, OS and installed language packs. Keep large text controls as a fallback; voice must not be the only way to use FOODIE.
+Do not reapply already-recorded migrations manually.
 
-## Public launch checklist
+## Connected application workflows
 
-- Configure email confirmation, CAPTCHA and rate limits.
-- Add phone OTP only after configuring an SMS provider and consent/rate limits.
-- Add moderation/reporting, donor verification, audit logs and retention rules.
-- Add food-safety, allergen disclosure and pickup handoff workflows.
-- Test RLS with donor, requester and anonymous accounts.
-- Add geocoding/distance search only after selecting a provider; current search is city/area text matching, not GPS distance.
-- Test concurrent reservations and request status transitions.
+- Supabase Auth email/password signup and sign-in; Supabase issues and refreshes signed JWT sessions.
+- Live food discovery using the read-only `search_food_matches` RPC.
+- Donor listing creation and food photo uploads to the `food-images` bucket.
+- Saved listings stored per authenticated user.
+- Atomic quantity reservations through `reserve_food`.
+- Requester cancellation; donor acceptance/rejection; collection settlement.
+- Inventory release on cancellation/rejection and collection accounting.
+- Private donor/requester phone exchange only after a request is accepted.
+- Donor inbox and listing management.
+- Companion conversation and message persistence.
 
-The existing React app still contains localStorage demo state and demo auth. This foundation must be wired into the current screens before the production site can be called fully backend-connected. Existing local demo records are not migrated automatically.
+The database is currently empty. There are no existing profiles, listings or requests in the project yet; new records will be created when users sign up and publish food.
+
+## AI companion setup — one required secret
+
+The `food-companion` Edge Function is deployed (version 2) with JWT verification enabled. It checks the signed-in user, queries current food listings, keeps conversation history, and calls an OpenAI-compatible chat-completions endpoint.
+
+The function is intentionally not usable until an AI provider key is configured. In Supabase Dashboard → Edge Functions → Secrets, add:
+
+- `AI_API_KEY` — your provider key (required).
+- `AI_BASE_URL` — optional; defaults to `https://api.openai.com/v1`.
+- `AI_MODEL` — optional; defaults to `gpt-4o-mini`.
+- `APP_ORIGIN` or `APP_ORIGINS` — optional allowed frontend origin(s); production fallback is the FOODIE Vercel domain.
+
+Then redeploy the function if you change its code:
+
+```bash
+supabase functions deploy food-companion
+```
+
+Never place the AI key in Vercel's `VITE_` environment variables. Do not paste it into a chat.
+
+## Tamil, Telugu and voice accessibility
+
+The companion supports Tamil (`ta-IN`), Telugu (`te-IN`) and English (`en-IN`) locale hints. Voice recognition submits a final transcript automatically, and assistant replies can be spoken aloud. Language preference is saved to the member profile.
+
+Speech recognition and voices are supplied by the user's browser/OS. Install the relevant Tamil/Telugu speech and text-to-speech language packs on Android/Chrome where available. Support varies by device; typing and on-screen controls remain available. This is not a guarantee of universal native speech support, and the rest of the site is not yet fully translated.
+
+## Before public launch
+
+- Configure Supabase Auth Site URL, redirect URLs, email confirmation and production email delivery.
+- Add CAPTCHA and rate limits; add phone OTP only after selecting an SMS provider and consent flow.
+- Add moderation/reporting, donor verification, abuse controls, audit logs and retention rules.
+- Add structured ingredient/allergen fields, food handling guidance and safe pickup handoff safeguards.
+- Test RLS using separate donor, requester and anonymous accounts.
+- Test simultaneous reservations, cancellation/rejection release, accepted contact visibility and collection settlement with real accounts.
+- Verify Tamil/Telugu speech recognition and speech output on target Android devices.
+- Select a geocoding provider before presenting GPS-based distance or nearby ranking. Current search is city/area text matching, not GPS distance.
+- Run a complete end-to-end browser test before merging or promoting this branch to production.
+
+## Build
+
+```bash
+npm install
+npm run build
+```
