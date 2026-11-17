@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "FOODIE — Community Food Sharing",
-  "short_name": "FOODIE",
-  "description": "Discover and share surplus food in your neighbourhood.",
+  "name": "Everkind — Community Food Sharing",
+  "short_name": "Everkind",
+  "description": "A community for sharing surplus food and passing kindness forward.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
