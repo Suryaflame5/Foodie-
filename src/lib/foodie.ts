@@ -3,7 +3,7 @@ import { supabase } from './supabase';
 export type FoodRecord = {
   id: string; title: string; category: string; donor: string; donorType: string;
   qty: number; unit: string; deadline: string; time: string; area: string; city: string;
-  image: string; description: string; storage: string; diet: string;
+  image: string; description: string; storage: string; diet: string; allergens?: string[]; preparedAt?: string | null;
   pickupDeadline?: string; imagePath?: string; status?: string; sample?: boolean;
 };
 const client = () => {
@@ -36,7 +36,7 @@ export async function myFoodListings(): Promise<FoodRecord[]> {
   const {data,error}=await client().from('food_listings').select('*').eq('donor_id',user.id).order('created_at',{ascending:false});
   if(error) throw error;
   const {data:profile}=await client().from('profiles').select('full_name,role').eq('id',user.id).maybeSingle();
-  return (data||[]).map((r:any)=>mapListing({...r,donor:profile?.full_name,donor_type:profile?.role}));
+  return (data||[]).map((r:any)=>mapListing({...r,donor:profile?.full_name,donor_type:r.donor_type||profile?.role}));
 }
 export async function publishFood(input: {
  title:string;category:string;description:string;quantity:number;unit:string;area:string;city:string;
