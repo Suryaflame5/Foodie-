@@ -64,3 +64,13 @@
 .location-control button{flex:0 0 auto}
 .explore-toolbar .location-control{max-width:300px}
 @media(max-width:700px){.location-control{width:100%;max-width:none;min-width:0;flex:1}.explore-toolbar .location-control{max-width:none;flex-basis:100%}.location-control input{flex:1}}
+
+
+/* Clear, actionable donor invitation */
+.how-bottom.share-invite{align-items:center;gap:24px;margin-top:42px;padding:26px 28px;border:1px solid #d9dfd4;background:#f1f3ed}
+.share-invite-copy{max-width:560px}
+.share-invite-kicker{display:block;font-size:9px;font-weight:700;letter-spacing:1.5px;color:#68745f;margin-bottom:8px}
+.share-invite-copy h3{font-family:'DM Serif Display';font-size:27px;font-weight:400;line-height:1.15;margin:0 0 7px;color:var(--ink)}
+.share-invite-copy p{font-size:12px;line-height:1.65;color:var(--muted);margin:0}
+.share-invite>.btn{flex:0 0 auto;white-space:nowrap}
+@media(max-width:650px){.how-bottom.share-invite{align-items:flex-start;flex-direction:column;padding:22px 18px;gap:17px}.share-invite-copy h3{font-size:24px}.share-invite>.btn{width:100%;justify-content:center}}
