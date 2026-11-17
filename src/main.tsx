@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom';
 import App from './App';
 import SeoManager from './SeoManager';
 import './styles.css';
+import './public-pages.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
