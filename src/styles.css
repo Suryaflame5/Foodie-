@@ -103,3 +103,16 @@
 .companion-compose{display:flex;align-items:center;gap:8px;padding:10px;border-top:1px solid var(--line)}.companion-compose input{flex:1;min-width:0;border:1px solid var(--line);background:#fff;padding:12px 10px;font-size:12px;outline-color:var(--green)}.companion-compose button{display:grid;place-items:center;min-width:40px;height:40px;border:0;background:var(--green);color:white}.companion-compose button:first-child{background:#eeede4;color:var(--green)}.companion-compose button.is-listening{background:#b84d3d;color:#fff}.companion-compose button:disabled{opacity:.35}
 .companion-footnote{margin:0;padding:0 13px 10px;color:var(--muted);font-size:9px;line-height:1.4}
 @media(max-width:650px){.companion-root{right:12px;bottom:82px}.companion-panel{width:calc(100vw - 24px);height:min(600px,calc(100dvh - 145px))}.companion-launch{padding:12px 15px}}
+
+
+/* Live companion results and donation handoff */
+.companion-live-matches{display:grid;gap:7px;margin-top:5px}
+.companion-live-matches>strong{font-size:11px;color:var(--green);letter-spacing:.3px}
+.companion-match{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 11px;background:#fff;border:1px solid var(--line);color:var(--ink);text-decoration:none}
+.companion-match span{display:grid;gap:3px;min-width:0}
+.companion-match b{font-size:11px;font-weight:700}
+.companion-match small{font-size:9px;color:var(--muted);line-height:1.4}
+.companion-match:hover{border-color:var(--green)}
+.companion-donate-link{display:inline-flex;align-items:center;border:1px solid var(--line);background:#fff;padding:8px 10px;font-size:10px;color:var(--green);text-decoration:none}
+.companion-language button{display:grid;place-items:center;width:32px;height:32px;border:1px solid var(--line);background:#fff;color:var(--green)}
+.companion-language button.is-listening{background:var(--green);color:#fff}
