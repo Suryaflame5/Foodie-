@@ -74,3 +74,14 @@
 .share-invite-copy p{font-size:12px;line-height:1.65;color:var(--muted);margin:0}
 .share-invite>.btn{flex:0 0 auto;white-space:nowrap}
 @media(max-width:650px){.how-bottom.share-invite{align-items:flex-start;flex-direction:column;padding:22px 18px;gap:17px}.share-invite-copy h3{font-size:24px}.share-invite>.btn{width:100%;justify-content:center}}
+
+
+/* Reliable mobile navigation drawer */
+@media(max-width:700px){
+  .topbar{position:sticky;isolation:isolate}
+  .topbar .menu-toggle{display:grid;place-items:center;width:44px;height:44px;min-width:44px;padding:0;margin:0 0 0 4px;position:relative;z-index:32;touch-action:manipulation}
+  .topbar .nav-links{display:none!important;position:absolute;top:100%;left:0;right:0;z-index:31;flex-direction:column;align-items:stretch;gap:0;margin:0;padding:10px 6% 18px;background:var(--ivory);border-bottom:1px solid var(--line);box-shadow:0 12px 20px rgba(32,36,31,.09);visibility:hidden;opacity:0;pointer-events:none}
+  .topbar .nav-links.nav-open{display:flex!important;visibility:visible;opacity:1;pointer-events:auto}
+  .topbar .nav-links a{display:block;padding:15px 0;border-bottom:1px solid var(--line);font-size:14px}
+  .topbar .nav-links a:last-child{border-bottom:0}
+}
