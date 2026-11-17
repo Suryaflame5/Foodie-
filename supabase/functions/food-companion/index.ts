@@ -1,6 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const allowedOrigins=(Deno.env.get("APP_ORIGINS")??Deno.env.get("APP_ORIGIN")??"https://everkindhub.netlify.app").split(",").map(v=>v.trim()).filter(Boolean);
 const isAllowedOrigin=(origin:string)=>allowedOrigins.includes(origin)
+ || origin==="https://foodie-liart-one.vercel.app"
+ || /^https:\/\/deploy-preview-\d+--everkindhub\.netlify\.app$/i.test(origin)
  || /^https:\/\/foodie-[a-z0-9-]+-surya-s-projects-ce912c20\.vercel\.app$/i.test(origin)
  || origin==="http://localhost:5173" || origin==="http://127.0.0.1:5173";
 const corsFor=(origin:string)=>({"Access-Control-Allow-Origin":isAllowedOrigin(origin)?origin:allowedOrigins[0],"Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS","Vary":"Origin"});
