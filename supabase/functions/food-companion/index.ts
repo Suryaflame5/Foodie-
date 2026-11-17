@@ -1,6 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const allowedOrigins=(Deno.env.get("APP_ORIGINS")??Deno.env.get("APP_ORIGIN")??"https://foodie-liart-one.vercel.app").split(",").map(v=>v.trim()).filter(Boolean);
-const corsFor=(origin:string)=>({"Access-Control-Allow-Origin":allowedOrigins.includes(origin)?origin:allowedOrigins[0],"Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS","Vary":"Origin"});
+const isAllowedOrigin=(origin:string)=>allowedOrigins.includes(origin)
+ || /^https:\/\/foodie-[a-z0-9-]+-surya-s-projects-ce912c20\.vercel\.app$/i.test(origin)
+ || origin==="http://localhost:5173" || origin==="http://127.0.0.1:5173";
+const corsFor=(origin:string)=>({"Access-Control-Allow-Origin":isAllowedOrigin(origin)?origin:allowedOrigins[0],"Access-Control-Allow-Headers":"authorization, x-client-info, apikey, content-type","Access-Control-Allow-Methods":"POST, OPTIONS","Vary":"Origin"});
 const json=(body:unknown,status=200,origin="")=>new Response(JSON.stringify(body),{status,headers:{...corsFor(origin),"Content-Type":"application/json"}});
 const langs={en:"English",ta:"Tamil (தமிழ்)",te:"Telugu (తెలుగు)"} as const;
 Deno.serve(async req=>{
