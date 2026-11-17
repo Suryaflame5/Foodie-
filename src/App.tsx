@@ -47,8 +47,8 @@ function App(){
   const {data:{session}}=await supabase.auth.getSession();
   if(!session?.user){setSaved([]);setRequests([]);setIncomingRequests([]);setMyDonations([]);return;}
   try{
-   const [ids,reqs,donations]=await Promise.all([getSavedIds(),getMyRequests(),myFoodListings()]);
-   setSaved(ids);setRequests(reqs);setMyDonations(donations as Food[]);
+   const [ids,reqs,incoming,donations]=await Promise.all([getSavedIds(),getMyRequests(),getIncomingRequests(),myFoodListings()]);
+   setSaved(ids);setRequests(reqs);setIncomingRequests(incoming);setMyDonations(donations as Food[]);
   }catch(e){notify(e instanceof Error?e.message:'Could not load your FOODIE activity.');}
  };
  useEffect(()=>{
