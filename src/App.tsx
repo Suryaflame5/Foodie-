@@ -32,7 +32,7 @@ function App(){
  const [saved,setSaved]=useState<string[]>([]);
  const [requests,setRequests]=useState<any[]>([]);
  const [incomingRequests,setIncomingRequests]=useState<any[]>([]);
- const [user,setUser]=useState<{name:string;type:string;email?:string;language?:'en'|'ta'|'te'}>({name:'Guest',type:'Individual',language:'ta'});
+ const [user,setUser]=useState<{name:string;type:string;email?:string;language?:'en'|'ta'|'te'}>({name:'Guest',type:'Individual',language:(localStorage.getItem('foodie-language') as 'en'|'ta'|'te')||'ta'});
  const [query,setQuery]=useState('');
  const [category,setCategory]=useState('All food');
  const [toast,setToast]=useState('');
@@ -52,7 +52,7 @@ function App(){
   }catch(e){notify(e instanceof Error?e.message:'Could not load your FOODIE activity.');}
  };
  useEffect(()=>{
-  if(!supabase){setUser({name:'Guest',type:'Individual',language:'ta'});setLoadingFoods(false);return;}
+  if(!supabase){setUser({name:'Guest',type:'Individual',language:(localStorage.getItem('foodie-language') as 'en'|'ta'|'te')||'ta'});setLoadingFoods(false);return;}
   let alive=true;
   const load=async(session:any)=>{
    if(!session?.user){if(alive){setUser({name:'Guest',type:'Individual',language:'ta'});setSaved([]);setRequests([]);setMyDonations([]);}return;}
