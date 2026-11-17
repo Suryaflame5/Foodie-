@@ -1,8 +1,8 @@
-# FOODIE
+# Everkind Web
 
 **Good food deserves another chance.**
 
-FOODIE is a community surplus-food discovery and sharing platform. It helps neighbours, community kitchens and local businesses make surplus edible food visible to people who may be able to collect it. It is not a food-delivery marketplace.
+Everkind is a community surplus-food discovery and sharing platform. It helps neighbours, community kitchens and local businesses make surplus edible food visible to people who may be able to collect it. It is not a food-delivery marketplace.
 
 ## Current implementation
 
@@ -13,9 +13,9 @@ FOODIE is a community surplus-food discovery and sharing platform. It helps neig
 - Atomic reservation and inventory lifecycle: request, accept/reject, cancel and mark collected.
 - Donor inbox and private contact exchange after acceptance.
 - Tamil/Telugu/English voice-first food companion UI, backed by a JWT-verified Supabase Edge Function.
-- Vercel preview deployments from the `feature/supabase-food-companion` branch.
+- Netlify production hosting with a separate GitHub review branch for this implementation.
 
-The Supabase schema and migrations are applied to project `njuxgtacizzgwqymtcbc`. The project currently contains zero profiles, listings and requests; the database will populate as members register and share food.
+The Supabase project `njuxgtacizzgwqymtcbc` is healthy. The latest audit found 6 food listings, 0 profiles and 0 requests in the inspected tables; do not treat seeded or unowned records as verified community offers.
 
 ## Local setup
 
@@ -46,6 +46,8 @@ Voice recognition and speech output depend on the user's browser, OS and install
 
 ## Deploy
 
-Vercel project: `foodie` (Vite). Build command `npm run build`, output `dist`. The current backend work is in a draft pull request and has not been merged to `main` or promoted to the production alias.
+The current production site is hosted on Netlify at `https://everkindhub.netlify.app`. Build command: `npm run build`; publish directory: `dist`; Node runtime: 22. The working implementation is in a draft pull request and has not been merged to `main` or promoted to production.
+
+Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in the Netlify environment for the intended deploy contexts. Never add service-role or AI provider credentials to browser-exposed `VITE_` variables.
 
 See [the Supabase setup and launch checklist](docs/SUPABASE_SETUP.md).
