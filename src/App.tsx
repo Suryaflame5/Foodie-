@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { supabase, isSupabaseConfigured } from './lib/supabase';
 import { ArrowDown, ArrowLeft, ArrowRight, Bookmark, Check, ChefHat, Clock3, Compass, Filter, Heart, Leaf, LocateFixed, LockKeyhole, Mail, MapPin, Menu, Minus, Plus, Search, Share2, SlidersHorizontal, Soup, Sprout, Store, Utensils, UserRound, X } from 'lucide-react';
 
 type Food = { id:string; title:string; category:string; donor:string; donorType:string; qty:number; unit:string; deadline:string; time:string; area:string; city:string; image:string; description:string; storage:string; diet:string; sample?:true; };
@@ -76,11 +77,20 @@ function AuthPage({mode,onAuth}:{mode:'signin'|'signup';onAuth:(profile:{name:st
  const [type,setType]=useState('Individual');
  const [error,setError]=useState('');
  const signup=mode==='signup';
- const submit=(e:any)=>{
+ const submit=async(e:any)=>{
   e.preventDefault();setError('');
   const cleanEmail=email.trim().toLowerCase();
   if(signup&&!name.trim()){setError('Please enter your name.');return;}
-  if(password.length<8){setError('Use at least 8 characters for this demo form.');return;}
+  if(password.length<8){setError('Use at least 8 characters.');return;}
+  if(isSupabaseConfigured&&supabase){
+   const result=signup
+    ? await supabase.auth.signUp({email:cleanEmail,password,options:{data:{full_name:name.trim(),preferred_language:'en'}}})
+    : await supabase.auth.signInWithPassword({email:cleanEmail,password});
+   if(result.error){setError(result.error.message);return;}
+   if(signup&&!result.data.session){setError('Check your email to confirm your account, then sign in.');return;}
+   const profile={name:signup?name.trim():(result.data.user?.user_metadata?.full_name||cleanEmail.split('@')[0]),type,email:cleanEmail};
+   onAuth(profile);navigate('/account');return;
+  }
   const existing=read<{name:string;type:string;email:string}|null>('foodie-demo-profile',null);
   if(!signup&&existing&&existing.email!==cleanEmail){setError('That email does not match the demo profile saved in this browser.');return;}
   if(!signup&&!existing){setError('No demo profile exists on this browser yet. Create an account first.');return;}
@@ -106,7 +116,7 @@ function AuthPage({mode,onAuth}:{mode:'signin'|'signup';onAuth:(profile:{name:st
      <label>Password<div className="auth-input"><LockKeyhole size={17}/><input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="At least 8 characters" autoComplete={signup?'new-password':'current-password'} minLength={8} required/></div></label>
      {signup&&<label>I’m joining as<select className="auth-role" value={type} onChange={e=>setType(e.target.value)}><option>Individual</option><option>Organisation</option></select></label>}
      {error&&<p className="auth-error" role="alert">{error}</p>}
-     <button className="btn btn-dark full-btn auth-submit" type="submit">{signup?'Create demo account':'Sign in'} <ArrowRight size={16}/></button>
+     <button className="btn btn-dark full-btn auth-submit" type="submit">{signup?'Create account':'Sign in'} <ArrowRight size={16}/></button>
     </form>
     <div className="auth-switch">{signup?'Already part of FOODIE?':'New to FOODIE?'} <Link to={signup?'/signin':'/signup'}>{signup?'Sign in':'Create an account'} <ArrowRight size={14}/></Link></div>
     <p className="auth-disclaimer"><strong>Preview mode.</strong> This is a front-end demonstration, not secure authentication. Your password is never stored or sent; the profile is saved only in this browser. Real sign-in requires a backend authentication service.</p>
