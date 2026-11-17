@@ -1,0 +1,12 @@
+{
+  "id": "/",
+  "name": "FOODIE — Community Food Sharing",
+  "short_name": "FOODIE",
+  "description": "Discover and share surplus food in your neighbourhood.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f7f5ee",
+  "theme_color": "#f7f5ee",
+  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

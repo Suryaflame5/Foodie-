@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /account
+Disallow: /signin
+Disallow: /signup
+Disallow: /saved
+Disallow: /requests
+Disallow: /donations
+
+Sitemap: https://foodie-liart-one.vercel.app/sitemap.xml

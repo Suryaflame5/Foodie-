@@ -2,55 +2,50 @@
 
 **Good food deserves another chance.**
 
-FOODIE is a community surplus-food discovery and sharing experience. It helps neighbours, community kitchens and local businesses make surplus edible food visible to people who may be able to collect it.
+FOODIE is a community surplus-food discovery and sharing platform. It helps neighbours, community kitchens and local businesses make surplus edible food visible to people who may be able to collect it. It is not a food-delivery marketplace.
 
-> This repository currently contains a frontend demo. Listings are illustrative sample data, and actions are stored in the current browser only. It is not a food-delivery marketplace, and it does not confirm reservations, contact donors, verify users or provide live availability.
+## Current implementation
 
-## What is included
+- Responsive React + TypeScript application.
+- Supabase Auth email/password sessions.
+- Shared PostgreSQL listings, saved food and request history with Row Level Security.
+- Food photo uploads to Supabase Storage.
+- Atomic reservation and inventory lifecycle: request, accept/reject, cancel and mark collected.
+- Donor inbox and private contact exchange after acceptance.
+- Tamil/Telugu/English voice-first food companion UI, backed by a JWT-verified Supabase Edge Function.
+- Vercel preview deployments from the `feature/supabase-food-companion` branch.
 
-- Responsive home and food discovery experience
-- Search and category filters
-- Listing details, quantity selection and demo requests
-- Saved listings, request history and donor listing management
-- Surplus-food donation form with food-safety declaration
-- Local demo profile
-- Manual location selection and browser geolocation permission
-- LocalStorage persistence
-- Mobile bottom navigation and accessible labels
-- Vercel SPA rewrite configuration
+The Supabase schema and migrations are applied to project `njuxgtacizzgwqymtcbc`. The project currently contains zero profiles, listings and requests; the database will populate as members register and share food.
 
-## Run locally
+## Local setup
 
 Requirements: Node.js 20+ and npm.
+
+1. Copy `.env.example` to `.env.local`.
+2. Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` using the Supabase project URL and publishable key.
+3. Never expose a service-role key or AI provider key in frontend variables.
+4. Run:
 
 ```bash
 npm install
 npm run dev
 ```
 
-Create a production build:
+Production build:
 
 ```bash
 npm run build
 npm run preview
 ```
 
-## Demo data and limitations
+## AI companion secret
 
-The initial listings are sample content for Chennai neighbourhoods. They are not verified offers and must not be treated as real food availability. User-created listings, saved items and requests are stored in browser LocalStorage and do not sync to another device. The current geolocation control reads browser coordinates but does not calculate road distance or proximity ranking.
+The Supabase Edge Function is deployed with JWT verification. To enable generated companion replies, configure `AI_API_KEY` in Supabase Edge Function Secrets. Optional `AI_BASE_URL`, `AI_MODEL` and `APP_ORIGIN(S)` settings are documented in [docs/SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md).
 
-No backend, authentication, donor messaging, reservation service, moderation, food-safety verification or live map provider is connected yet. Do not enter sensitive personal information into this demo.
+Voice recognition and speech output depend on the user's browser, OS and installed Tamil/Telugu language packs. The app keeps text controls as a fallback. Full-site Tamil/Telugu translation, geocoded distance search, donor verification, moderation, and production abuse controls remain launch work.
 
-## Deploy to Vercel
+## Deploy
 
-Import this repository into Vercel. The Vite defaults are:
+Vercel project: `foodie` (Vite). Build command `npm run build`, output `dist`. The current backend work is in a draft pull request and has not been merged to `main` or promoted to the production alias.
 
-- Framework preset: Vite
-- Build command: `npm run build`
-- Output directory: `dist`
-
-The included `vercel.json` routes client-side paths back to the app entry point.
-
-## Tech
-
-React · TypeScript · Vite · React Router · Tailwind CSS · Lucide
+See [the Supabase setup and launch checklist](docs/SUPABASE_SETUP.md).
