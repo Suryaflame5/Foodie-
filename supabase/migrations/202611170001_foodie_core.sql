@@ -89,7 +89,7 @@ grant execute on function public.reserve_food(uuid,integer,text) to authenticate
 create or replace function public.search_food_matches(p_city text,p_area text default null,p_query text default null,p_limit integer default 8)
 returns table(id uuid,title text,category text,description text,available_quantity integer,unit text,area text,city text,
  pickup_deadline timestamptz,image_path text,dietary_tags text[],donor_name text)
-language sql stable security invoker set search_path=public as $$
+language sql stable security definer set search_path=public as $
  select l.id,l.title,l.category,l.description,(l.quantity-l.reserved_quantity),l.unit,l.area,l.city,
  l.pickup_deadline,l.image_path,l.dietary_tags,p.full_name
  from public.food_listings l join public.profiles p on p.id=l.donor_id
@@ -113,6 +113,11 @@ create policy "discover available listings" on public.food_listings for select t
 create policy "create own safe listings" on public.food_listings for insert to authenticated with check(donor_id=auth.uid() and safety_confirmed=true);
 create policy "update own listings" on public.food_listings for update to authenticated using(donor_id=auth.uid()) with check(donor_id=auth.uid());
 create policy "delete own listings" on public.food_listings for delete to authenticated using(donor_id=auth.uid());
+create policy "requesters see their reserved listings" on public.food_listings for select to authenticated
+ using(exists(select 1 from public.food_requests r where r.listing_id=id and r.requester_id=auth.uid()));
+create policy "donors manage request status" on public.food_requests for update to authenticated
+ using(exists(select 1 from public.food_listings l where l.id=listing_id and l.donor_id=auth.uid()))
+ with check(exists(select 1 from public.food_listings l where l.id=listing_id and l.donor_id=auth.uid()) and status in ('accepted','rejected','collected','pending'));
 create policy "requesters and donors view requests" on public.food_requests for select to authenticated
  using(requester_id=auth.uid() or exists(select 1 from public.food_listings l where l.id=listing_id and l.donor_id=auth.uid()));
 create policy "create own requests" on public.food_requests for insert to authenticated with check(requester_id=auth.uid());
