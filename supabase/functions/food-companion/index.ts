@@ -17,8 +17,10 @@ Deno.serve(async req=>{
  const supabase=createClient(Deno.env.get("SUPABASE_URL")!,Deno.env.get("SUPABASE_ANON_KEY")!,{global:{headers:{Authorization:auth}},auth:{persistSession:false}});
  const {data:{user},error:authError}=await supabase.auth.getUser();
  if(authError||!user)return json({error:"Your session expired. Please sign in again."},401,origin);
- const apiKey=Deno.env.get("AI_API_KEY");
- if(!apiKey)return json({error:"The food companion is not configured yet."},503,origin);
+ const groqKey=Deno.env.get("GROQ_API_KEY");
+  const legacyKey=Deno.env.get("AI_API_KEY");
+  const apiKey=groqKey||legacyKey;
+  if(!apiKey)return json({error:"The free AI provider is not connected yet. Add GROQ_API_KEY in Supabase Edge Function secrets."},503,origin);
  try{
   const body=await req.json();
   const message=String(body.message??"").trim().slice(0,3000);
@@ -44,10 +46,10 @@ Deno.serve(async req=>{
   const {data:history,error:historyError}=await supabase.from("companion_messages").select("role,content").eq("conversation_id",conversationId).eq("user_id",user.id).order("created_at",{ascending:true}).limit(12);
   if(historyError)throw historyError;
   const grounded=(matches??[]).map((m:any)=>({id:m.id,food:m.title,category:m.category,quantity:m.available_quantity,unit:m.unit,area:m.area,city:m.city,pickup_before:m.pickup_deadline,pickup_instructions:m.pickup_instructions,storage_notes:m.storage_notes,donor:m.donor_name,donor_type:m.donor_type,dietary_tags:m.dietary_tags,allergens:m.allergen_info,prepared_at:m.food_prepared_at}));
-  const system="You are FOODIE's warm practical food-sharing companion. Reply only in "+langs[language]+". Use short simple spoken sentences suitable for people with low literacy. Never shame anyone. Only describe listings in the supplied live data; never invent availability, distance or directions. If there are no matches, ask one simple question about food, quantity or area. Tell users to coordinate collection with donors. If someone has surplus food to share, guide them to the Share Food action in the app; never claim you published a listing. Do not guarantee food safety; encourage checking preparation time, allergens, packaging and condition.";
+  const system="You are Everkind's warm practical community food-sharing companion. Reply only in "+langs[language]+". Use short simple spoken sentences suitable for people with low literacy. Never shame anyone. Only describe listings in the supplied live data; never invent availability, distance or directions. If there are no matches, ask one simple question about food, quantity or area. Tell users to coordinate collection with donors. If someone has surplus food to share, guide them to the Share Food action in the app; never claim you published a listing. Do not guarantee food safety; encourage checking preparation time, allergens, packaging and condition.";
   const conversationMessages=(history??[]).map((m:any)=>({role:m.role,content:m.content}));
-  const base=(Deno.env.get("AI_BASE_URL")??"https://api.openai.com/v1").replace(/\/$/,"");
-  const ai=await fetch(base+"/chat/completions",{method:"POST",headers:{"Authorization":"Bearer "+apiKey,"Content-Type":"application/json"},signal:AbortSignal.timeout(20000),body:JSON.stringify({model:Deno.env.get("AI_MODEL")??"gpt-4o-mini",temperature:0.35,max_tokens:420,messages:[{role:"system",content:system+"\nCurrent location: "+area+", "+city+". Current live listings (the only food availability source): "+JSON.stringify(grounded)},{role:"system",content:"If the conversation mentions earlier food needs, use the prior messages below, but always check only the current live listings."},...conversationMessages]})});
+  const base=(Deno.env.get("AI_BASE_URL")??(groqKey?"https://api.groq.com/openai/v1":"https://api.openai.com/v1")).replace(/\/$/,"");
+  const ai=await fetch(base+"/chat/completions",{method:"POST",headers:{"Authorization":"Bearer "+apiKey,"Content-Type":"application/json"},signal:AbortSignal.timeout(20000),body:JSON.stringify({model:Deno.env.get("AI_MODEL")??(groqKey?"openai/gpt-oss-20b":"gpt-4o-mini"),temperature:0.35,max_completion_tokens:420,messages:[{role:"system",content:system+"\nCurrent location: "+area+", "+city+". Current live listings (the only food availability source): "+JSON.stringify(grounded)},{role:"system",content:"If the conversation mentions earlier food needs, use the prior messages below, but always check only the current live listings."},...conversationMessages]})});
   if(!ai.ok){console.error("AI provider failed",ai.status,(await ai.text()).slice(0,400));return json({error:"I could not reach the companion. Please try again."},502,origin);}
   const result=await ai.json(),reply=String(result.choices?.[0]?.message?.content??"").trim();
   if(!reply)return json({error:"I could not form a reply. Please try again."},502,origin);
