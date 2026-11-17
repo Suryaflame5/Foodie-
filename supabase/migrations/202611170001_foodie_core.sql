@@ -89,7 +89,7 @@ grant execute on function public.reserve_food(uuid,integer,text) to authenticate
 create or replace function public.search_food_matches(p_city text,p_area text default null,p_query text default null,p_limit integer default 8)
 returns table(id uuid,title text,category text,description text,available_quantity integer,unit text,area text,city text,
  pickup_deadline timestamptz,image_path text,dietary_tags text[],donor_name text)
-language sql stable security definer set search_path=public as $
+language sql stable security definer set search_path=public as $$
  select l.id,l.title,l.category,l.description,(l.quantity-l.reserved_quantity),l.unit,l.area,l.city,
  l.pickup_deadline,l.image_path,l.dietary_tags,p.full_name
  from public.food_listings l join public.profiles p on p.id=l.donor_id
