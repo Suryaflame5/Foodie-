@@ -19,12 +19,12 @@ const write = (key:string,value:unknown) => localStorage.setItem(key,JSON.string
 const categories = ['All food','Prepared meals','Vegetables','Bakery','Fruit','Packaged food'];
 const moneyless = (n:number,u:string) => `${n} ${u} available`;
 
-function Header({location,user}:{location:string;user:{name:string}}) {
- const [open,setOpen]=useState(false);
- const closeMenu=()=>setOpen(false);
- return <header className="topbar"><Link to="/" className="brand" onClick={closeMenu}><span className="brand-mark"><Sprout size={19}/></span>foodie<span className="brand-period">.</span></Link><nav id="foodie-mobile-navigation" className={open?'nav-links nav-open':'nav-links'} aria-label="Main navigation"><NavLink to="/explore" onClick={closeMenu}>Explore food</NavLink><NavLink to="/donate" onClick={closeMenu}>Donate food</NavLink><a href="/#how" onClick={closeMenu}>How it works</a><NavLink to="/saved" onClick={closeMenu}>Saved</NavLink></nav><div className="header-right"><span className="location-chip"><MapPin size={14}/>{location}</span><Link className="sign-link" to={user.name==='Guest'?'/signin':'/account'}>{user.name==='Guest'?'Sign in':user.name} <ArrowRight size={14}/></Link></div><button type="button" className="icon-btn menu-toggle" onClick={()=>setOpen(value=>!value)} aria-label={open?'Close navigation menu':'Open navigation menu'} aria-expanded={open} aria-controls="foodie-mobile-navigation">{open?<X size={23}/>:<Menu size={23}/>}</button></header>;
+function Header({location,user,language,onLanguage}:{location:string;user:{name:string};language:'en'|'ta'|'te';onLanguage:(v:'en'|'ta'|'te')=>void}) {
+ const [open,setOpen]=useState(false);const closeMenu=()=>setOpen(false);
+ const labels=language==='ta'?{explore:'உணவைத் தேடு',donate:'உணவைப் பகிர',how:'எப்படி செயல்படுகிறது',saved:'சேமித்தவை',signin:'உள்நுழை'}:language==='te'?{explore:'ఆహారం వెతుకు',donate:'ఆహారం పంచు',how:'ఎలా పనిచేస్తుంది',saved:'సేవ్ చేసినవి',signin:'లాగిన్'}:{explore:'Explore food',donate:'Donate food',how:'How it works',saved:'Saved',signin:'Sign in'};
+ return <header className="topbar"><Link to="/" className="brand" onClick={closeMenu}><span className="brand-mark"><Sprout size={19}/></span>foodie<span className="brand-period">.</span></Link><nav id="foodie-mobile-navigation" className={open?'nav-links nav-open':'nav-links'} aria-label="Main navigation"><NavLink to="/explore" onClick={closeMenu}>{labels.explore}</NavLink><NavLink to="/donate" onClick={closeMenu}>{labels.donate}</NavLink><a href="/#how" onClick={closeMenu}>{labels.how}</a><NavLink to="/saved" onClick={closeMenu}>{labels.saved}</NavLink></nav><div className="header-right"><span className="location-chip"><MapPin size={14}/>{location}</span><select className="language-switch" aria-label="App language" value={language} onChange={e=>onLanguage(e.target.value as 'en'|'ta'|'te')}><option value="ta">தமிழ்</option><option value="te">తెలుగు</option><option value="en">EN</option></select><Link className="sign-link" to={user.name==='Guest'?'/signin':'/account'}>{user.name==='Guest'?labels.signin:user.name} <ArrowRight size={14}/></Link></div><button type="button" className="icon-btn menu-toggle" onClick={()=>setOpen(value=>!value)} aria-label={open?'Close navigation menu':'Open navigation menu'} aria-expanded={open} aria-controls="foodie-mobile-navigation">{open?<X size={23}/>:<Menu size={23}/>}</button></header>;
 }
-function BottomNav(){return <nav className="bottom-nav"><NavLink to="/explore"><Compass/>Explore</NavLink><NavLink to="/saved"><Bookmark/>Saved</NavLink><NavLink className="bottom-donate" to="/donate"><Plus/>Donate</NavLink><NavLink to="/requests"><Clock3/>Requests</NavLink><NavLink to="/account"><Menu/>Account</NavLink></nav>;}
+function BottomNav({language}:{language:'en'|'ta'|'te'}){const labels=language==='ta'?['தேடு','சேமிப்பு','பகிர்','கோரிக்கைகள்','கணக்கு']:language==='te'?['వెతుకు','సేవ్','పంచు','అభ్యర్థనలు','ఖాతా']:['Explore','Saved','Donate','Requests','Account'];return <nav className="bottom-nav"><NavLink to="/explore"><Compass/>{labels[0]}</NavLink><NavLink to="/saved"><Bookmark/>{labels[1]}</NavLink><NavLink className="bottom-donate" to="/donate"><Plus/>{labels[2]}</NavLink><NavLink to="/requests"><Clock3/>{labels[3]}</NavLink><NavLink to="/account"><Menu/>{labels[4]}</NavLink></nav>;}
 function App(){
  const [location,setLocation]=useState(()=>localStorage.getItem('foodie-location')??'Chennai');
  const [foods,setFoods]=useState<Food[]>([]);
@@ -96,9 +96,13 @@ function App(){
   try{await updateProfile(name,language);setUser(old=>({...old,name,type,language}));notify('Your profile has been updated.');}
   catch(e){notify(e instanceof Error?e.message:'Could not update your profile.');}
  };
+ const changeLanguage=async(language:'en'|'ta'|'te')=>{
+  setUser(old=>({...old,language}));localStorage.setItem('foodie-language',language);
+  if(user.name!=='Guest'){try{await updateProfile(user.name,language);}catch(e){notify(e instanceof Error?e.message:'Could not save language preference.');}}
+ };
  const filtered=useMemo(()=>foods.filter(f=>(category==='All food'||f.category===category)&&f.qty>0),[foods,category]);
  const completeAuth=(profile:{name:string;type:string;email:string})=>{setUser({...profile,language:'ta'});notify('Welcome to FOODIE. Your account is connected.');void refreshMemberData();};
- return <><Header location={location} user={user}/><Routes>
+ return <><Header location={location} user={user} language={user.language||'ta'} onLanguage={changeLanguage}/><Routes>
  <Route path="/signin" element={<AuthPage mode="signin" onAuth={completeAuth}/>}/>
  <Route path="/signup" element={<AuthPage mode="signup" onAuth={completeAuth}/>}/>
  <Route path="/" element={<Home foods={filtered} all={foods} query={query} setQuery={setQuery} category={category} setCategory={setCategory} toggleSave={toggleSave} saved={saved} gps={gps} location={location} setLocation={chooseLocation} allFoods={foods}/>}/>
@@ -111,7 +115,7 @@ function App(){
  <Route path="/account" element={<Account user={user} saveProfile={saveProfile} notify={notify}/>}/>
  <Route path="/how" element={<How/>}/>
  <Route path="*" element={<main className="page narrow"><h1>That page wandered off.</h1><Link to="/">Back to food discovery <ArrowRight size={16}/></Link></main>}/>
- </Routes>{!isAuthRoute&&<BottomNav/>}{toast&&<div className="toast" role="status"><Check size={17}/>{toast}</div>}{loadingFoods&&<span className="sr-only" aria-live="polite">Loading food listings</span>}<FoodCompanion location={location} userName={user.name} preferredLanguage={user.language||'ta'}/><footer className="footer"><Link to="/" className="brand"><span className="brand-mark"><Sprout size={17}/></span>foodie<span className="brand-period">.</span></Link><span>Good food deserves another chance.</span><span>© 2026 FOODIE · Community food sharing</span></footer></>;
+ </Routes>{!isAuthRoute&&<BottomNav language={user.language||'ta'}/>}{toast&&<div className="toast" role="status"><Check size={17}/>{toast}</div>}{loadingFoods&&<span className="sr-only" aria-live="polite">Loading food listings</span>}<FoodCompanion location={location} userName={user.name} preferredLanguage={user.language||'ta'}/><footer className="footer"><Link to="/" className="brand"><span className="brand-mark"><Sprout size={17}/></span>foodie<span className="brand-period">.</span></Link><span>Good food deserves another chance.</span><span>© 2026 FOODIE · Community food sharing</span></footer></>;
 }
 
 function FoodImage({src,alt,category,className}:{src:string;alt:string;category:string;className?:string}){
