@@ -1,0 +1,4 @@
+project_id = "foodie"
+
+[functions.food-companion]
+verify_jwt = true

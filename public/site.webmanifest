@@ -1,0 +1,14 @@
+{
+  "id": "/",
+  "name": "EverkindHub — Community Food Sharing",
+  "short_name": "EverkindHub",
+  "description": "Find surplus food nearby, share extra meals and pass kindness forward.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#f3f0e7",
+  "theme_color": "#f3f0e7",
+  "icons": [
+    { "src": "/app-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
