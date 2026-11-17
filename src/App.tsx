@@ -67,7 +67,21 @@ function App(){
   const {data:{subscription}}=supabase.auth.onAuthStateChange((_event,session)=>{void load(session);});
   return()=>{alive=false;subscription.unsubscribe();};
  },[]);
- useEffect(()=>{setLoadingFoods(true);void refreshFoods();},[location,query]);
+ useEffect(()=>{
+  let active=true;
+  const timer=window.setTimeout(async()=>{
+   setLoadingFoods(true);
+   try{
+    const data=await discoverFood(location,query);
+    if(active)setFoods(data as Food[]);
+   }catch(e){
+    if(active)notify(e instanceof Error?e.message:'Could not load food listings.');
+   }finally{
+    if(active)setLoadingFoods(false);
+   }
+  },query.trim()?300:0);
+  return()=>{active=false;window.clearTimeout(timer);};
+ },[location,query]);
  const toggleSave=async(id:string)=>{
   const wasSaved=saved.includes(id);
   if(!supabase){notify('Food saving is unavailable until the backend is configured.');return;}
