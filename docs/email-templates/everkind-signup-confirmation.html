@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Confirm your Everkind email</title></head>
+<body style="margin:0;padding:32px 16px;background:#f5f3ed;font-family:Arial,Helvetica,sans-serif;color:#252923;">
+<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:620px;margin:0 auto;background:#fff;border-collapse:collapse;">
+<tr><td style="padding:30px 36px;background:#214b3b;color:#fff;">
+<div style="font-size:12px;letter-spacing:2px;font-weight:bold;text-transform:uppercase;color:#d8e4dc;">EVERKIND · GOOD FOOD, GOOD PEOPLE</div>
+<h1 style="margin:14px 0 0;font-family:Georgia,serif;font-size:30px;line-height:1.2;font-weight:normal;">Thanks for joining Everkind!</h1>
+</td></tr>
+<tr><td style="padding:36px;">
+<p style="font-size:17px;line-height:1.65;margin:0 0 18px;">Hello{{ if .Data.full_name }}, {{ .Data.full_name }}{{ else }} there{{ end }},</p>
+<p style="font-size:16px;line-height:1.7;color:#555d55;margin:0 0 28px;">We’re glad you’re here. Just confirm your email address to finish creating your account and start finding or sharing surplus food in your community.</p>
+<table role="presentation" cellspacing="0" cellpadding="0"><tr><td style="background:#214b3b;border-radius:3px;">
+<a href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=email" style="display:inline-block;padding:15px 24px;color:#fff;text-decoration:none;font-size:15px;font-weight:bold;">Confirm my email address</a>
+</td></tr></table>
+<p style="font-size:13px;line-height:1.6;color:#747b73;margin:28px 0 0;">If the button doesn’t work, copy and paste this link into your browser:</p>
+<p style="font-size:12px;line-height:1.6;word-break:break-all;"><a style="color:#214b3b;" href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=email">{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&amp;type=email</a></p>
+<p style="font-size:13px;line-height:1.6;color:#747b73;margin:28px 0 0;">If you didn’t create an Everkind account, you can safely ignore this email.</p>
+</td></tr>
+<tr><td style="padding:22px 36px;background:#f5f3ed;color:#727970;font-size:12px;line-height:1.6;">Everkind · Good food. Good people. Good things ahead.<br>Community food sharing, made easier.</td></tr>
+</table>
+</body></html>
