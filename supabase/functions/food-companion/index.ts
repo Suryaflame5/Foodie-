@@ -19,7 +19,7 @@ Deno.serve(async req=>{
   const city=String(body.city??"").trim().slice(0,80),area=String(body.area??"").trim().slice(0,80);
   if(!message)return json({error:"Tell me what food you need."},400);
   if(!city)return json({error:"Share your city or area so I can find available food."},400);
-  const {data:matches}=await supabase.rpc("search_food_matches",{p_city:city,p_area:area||null,p_query:message,p_limit:8});
+  const {data:matches}=await supabase.rpc("search_food_matches",{p_city:city,p_area:area||null,p_query:null,p_limit:8});
   let conversationId=body.conversationId?String(body.conversationId):null;
   if(conversationId){
    const {data}=await supabase.from("companion_conversations").select("id").eq("id",conversationId).eq("user_id",user.id).maybeSingle();
