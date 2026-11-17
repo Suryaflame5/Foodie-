@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { isSupabaseConfigured, supabase } from './lib/supabase';
 import FoodCompanion from './FoodCompanion';
+import { AboutPage, AssistantPage, ContactPage, FoodSafetyPage, OrganizationsPage, PrivacyPage, TermsPage } from './PublicPages';
 import { discoverFood, getMyRequests, getIncomingRequests, getSavedIds, myFoodListings, publishFood, reserveFood, toggleSavedListing, cancelFoodRequest, updateIncomingRequest, removeFoodListing, updateProfile } from './lib/foodie';
 import { ArrowDown, ArrowLeft, ArrowRight, Bookmark, Check, ChefHat, Clock3, Compass, Filter, Heart, Leaf, LocateFixed, LockKeyhole, Mail, MapPin, Menu, Minus, Plus, Search, Share2, SlidersHorizontal, Soup, Sprout, Store, Utensils, UserRound, X } from 'lucide-react';
 
@@ -142,8 +143,15 @@ function App(){
  <Route path="/donations" element={<Donations foods={myDonations} requests={incomingRequests} refresh={refreshMemberData} notify={notify} onStatus={async(id:string,status:'accepted'|'rejected'|'collected')=>{try{await updateIncomingRequest(id,status);notify(status==='collected'?'Collection marked complete.':status==='accepted'?'Request accepted. Contact details are now shared.':'Request declined and quantity released.');await Promise.all([refreshFoods(),refreshMemberData()]);}catch(e){notify(e instanceof Error?e.message:'Could not update request.');}}}/>}/>
  <Route path="/account" element={<Account user={user} saveProfile={saveProfile} notify={notify}/>}/>
  <Route path="/how" element={<How/>}/>
+ <Route path="/organizations" element={<OrganizationsPage/>}/>
+ <Route path="/food-safety" element={<FoodSafetyPage/>}/>
+ <Route path="/about" element={<AboutPage/>}/>
+ <Route path="/contact" element={<ContactPage/>}/>
+ <Route path="/privacy" element={<PrivacyPage/>}/>
+ <Route path="/terms" element={<TermsPage/>}/>
+ <Route path="/assistant" element={<AssistantPage location={location} userName={user.name} preferredLanguage={user.language||'ta'}/>}/>
  <Route path="*" element={<main className="page narrow"><h1>That page wandered off.</h1><Link to="/">Back to food discovery <ArrowRight size={16}/></Link></main>}/>
- </Routes>{!isAuthRoute&&<BottomNav language={user.language||'ta'}/>}{toast&&<div className="toast" role="status"><Check size={17}/>{toast}</div>}{loadingFoods&&<span className="sr-only" aria-live="polite">Loading food listings</span>}<FoodCompanion location={location} userName={user.name} preferredLanguage={user.language||'ta'}/><footer className="footer"><Link to="/" className="brand"><span className="brand-mark"><img src="/everkind-mark.svg" alt="" width="30" height="30" /></span><span className="brand-word">everkind</span></Link><span>Good food deserves another chance.</span><span>© 2026 Everkind · Community food sharing</span></footer></>;
+ </Routes>{!isAuthRoute&&<BottomNav language={user.language||'ta'}/>}{toast&&<div className="toast" role="status"><Check size={17}/>{toast}</div>}{loadingFoods&&<span className="sr-only" aria-live="polite">Loading food listings</span>}{route.pathname!=='/assistant'&&<FoodCompanion location={location} userName={user.name} preferredLanguage={user.language||'ta'}/> }<footer className="footer"><Link to="/" className="brand"><span className="brand-mark"><img src="/everkind-mark.svg" alt="" width="30" height="30" /></span><span className="brand-word">everkind</span></Link><span>Good food deserves another chance.</span><span>© 2026 Everkind · Community food sharing</span><nav className="footer-links" aria-label="Footer"><Link to="/organizations">Organizations</Link><Link to="/food-safety">Food safety</Link><Link to="/about">About</Link><Link to="/contact">Contact</Link><Link to="/privacy">Privacy</Link><Link to="/terms">Terms</Link><Link to="/assistant">Food companion</Link></nav></footer></>;
 }
 
 function FoodImage({src,alt,category,className}:{src:string;alt:string;category:string;className?:string}){
