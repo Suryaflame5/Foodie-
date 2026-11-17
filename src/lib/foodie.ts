@@ -21,12 +21,12 @@ const mapListing = (row: any): FoodRecord => ({
   description: row.description || '', storage: row.storage_notes || '', diet: (row.dietary_tags || []).join(' · ') || 'Not specified',
   allergens: row.allergen_info || [], preparedAt: row.food_prepared_at || null, status: row.status, sample: false
 });
-export async function discoverFood(location: string, query = ''): Promise<FoodRecord[]> {
+export async function discoverFood(location: string, query = '', cursor?: { deadline: string; id: string }): Promise<FoodRecord[]> {
   const parts=location.split(',').map(x=>x.trim()).filter(Boolean);
   const knownCity=parts.find(x=>/chennai|coimbatore|madurai|tiruchirappalli|salem|tirunelveli|vellore|erode|thanjavur|hyderabad|vijayawada|visakhapatnam|warangal|bangalore|bengaluru/i.test(x));
   const city=knownCity || (parts.length>1 ? parts[parts.length-1] : 'Chennai');
   const area=parts.length>1 ? parts.find(x=>x.toLowerCase()!==city.toLowerCase()) : (city.toLowerCase()===location.toLowerCase() || /^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(location) ? null : location);
-  const {data,error}=await client().rpc('search_food_matches',{p_city:city,p_area:area,p_query:query.trim()||null,p_limit:20});
+  const {data,error}=await client().rpc('search_food_matches_page',{p_city:city,p_area:area,p_query:query.trim()||null,p_limit:20,p_after_deadline:cursor?.deadline??null,p_after_id:cursor?.id??null});
   if(error) throw error;
   return (data||[]).map((r:any)=>mapListing(r));
 }
