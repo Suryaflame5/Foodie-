@@ -111,7 +111,7 @@ function App(){
  <Route path="/account" element={<Account user={user} saveProfile={saveProfile} notify={notify}/>}/>
  <Route path="/how" element={<How/>}/>
  <Route path="*" element={<main className="page narrow"><h1>That page wandered off.</h1><Link to="/">Back to food discovery <ArrowRight size={16}/></Link></main>}/>
- </Routes>{!isAuthRoute&&<BottomNav/>}{toast&&<div className="toast" role="status"><Check size={17}/>{toast}</div>}{loadingFoods&&<span className="sr-only" aria-live="polite">Loading food listings</span>}<FoodCompanion location={location} userName={user.name}/><footer className="footer"><Link to="/" className="brand"><span className="brand-mark"><Sprout size={17}/></span>foodie<span className="brand-period">.</span></Link><span>Good food deserves another chance.</span><span>© 2026 FOODIE · Community food sharing</span></footer></>;
+ </Routes>{!isAuthRoute&&<BottomNav/>}{toast&&<div className="toast" role="status"><Check size={17}/>{toast}</div>}{loadingFoods&&<span className="sr-only" aria-live="polite">Loading food listings</span>}<FoodCompanion location={location} userName={user.name} preferredLanguage={user.language||'ta'}/><footer className="footer"><Link to="/" className="brand"><span className="brand-mark"><Sprout size={17}/></span>foodie<span className="brand-period">.</span></Link><span>Good food deserves another chance.</span><span>© 2026 FOODIE · Community food sharing</span></footer></>;
 }
 
 function FoodImage({src,alt,category,className}:{src:string;alt:string;category:string;className?:string}){
