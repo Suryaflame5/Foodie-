@@ -81,8 +81,8 @@ export default function FoodCompanion({location,userName,preferredLanguage,initi
    {error&&<p className="companion-error" role="alert">{error}</p>}
    <form className="companion-compose" onSubmit={e=>{e.preventDefault();void send();}}>
     <button type="button" className={listening?'is-listening':''} onClick={startVoice} aria-label={listening?'Stop voice input':'Speak'}>{listening?<Square size={17}/>:<Mic size={19}/>}</button>
-    <input value={text} onChange={e=>setText(e.target.value)} placeholder={language==='ta'?'உங்களுக்கு என்ன உணவு வேண்டும்?':language==='te'?'మీకు ఏ ఆహారం కావాలి?':'Tell me what you need…'} aria-label="Message your food companion" disabled={signedOut}/>
-    <button type="submit" disabled={!text.trim()||busy||signedOut} aria-label="Send message"><Send size={18}/></button>
+    <input value={text} onChange={e=>setText(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();void send();}}} placeholder={language==='ta'?'உங்களுக்கு என்ன உணவு வேண்டும்?':language==='te'?'మీకు ఏ ఆహారం కావాలి?':'Tell me what you need…'} aria-label="Message your food companion" autoComplete="off"/>
+    <button type="submit" disabled={!text.trim()||busy} aria-label="Send message"><Send size={18}/></button>
    </form>
    <p className="companion-footnote">{language==='ta'?'உணவு கிடைப்பது நேரடி பட்டியல்களைப் பொறுத்தது. சேகரிப்பை நன்கொடையாளருடன் உறுதி செய்யுங்கள்.':language==='te'?'ఆహారం ప్రత్యక్ష జాబితాల ఆధారంగా చూపబడుతుంది. సేకరణను దాతతో నిర్ధారించండి.':'Availability is based on live listings. Collection is coordinated with the donor.'}</p>
   </section>}
