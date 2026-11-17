@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { supabase, isSupabaseConfigured } from './lib/supabase';
+import { supabase } from './lib/supabase';
+import FoodCompanion from './FoodCompanion';
 import { ArrowDown, ArrowLeft, ArrowRight, Bookmark, Check, ChefHat, Clock3, Compass, Filter, Heart, Leaf, LocateFixed, LockKeyhole, Mail, MapPin, Menu, Minus, Plus, Search, Share2, SlidersHorizontal, Soup, Sprout, Store, Utensils, UserRound, X } from 'lucide-react';
 
 type Food = { id:string; title:string; category:string; donor:string; donorType:string; qty:number; unit:string; deadline:string; time:string; area:string; city:string; image:string; description:string; storage:string; diet:string; sample?:true; };
@@ -68,7 +69,7 @@ function App(){
  <Route path="/account" element={<Account user={user} setUser={setUser} notify={notify}/>}/>
  <Route path="/how" element={<How/>}/>
  <Route path="*" element={<main className="page narrow"><h1>That page wandered off.</h1><Link to="/">Back to food discovery <ArrowRight size={16}/></Link></main>}/>
- </Routes>{!isAuthRoute&&<BottomNav/>}{toast&&<div className="toast" role="status"><Check size={17}/>{toast}</div>}<footer className="footer"><Link to="/" className="brand"><span className="brand-mark"><Sprout size={17}/></span>foodie<span className="brand-period">.</span></Link><span>Good food deserves another chance.</span><span>© 2026 FOODIE · Demo experience</span></footer></>;
+ </Routes>{!isAuthRoute&&<BottomNav/>}{toast&&<div className="toast" role="status"><Check size={17}/>{toast}</div>}<FoodCompanion location={location} userName={user.name}/><footer className="footer"><Link to="/" className="brand"><span className="brand-mark"><Sprout size={17}/></span>foodie<span className="brand-period">.</span></Link><span>Good food deserves another chance.</span><span>© 2026 FOODIE · Demo experience</span></footer></>;
 }
 
 function FoodImage({src,alt,category,className}:{src:string;alt:string;category:string;className?:string}){
