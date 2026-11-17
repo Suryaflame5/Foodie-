@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { isSupabaseConfigured, supabase } from './lib/supabase';
 import FoodCompanion from './FoodCompanion';
+import { discoverFood, getMyRequests, getSavedIds, myFoodListings, publishFood, reserveFood, toggleSavedListing, cancelFoodRequest, updateProfile } from './lib/foodie';
+import type { FoodRecord } from './lib/foodie';
 import { ArrowDown, ArrowLeft, ArrowRight, Bookmark, Check, ChefHat, Clock3, Compass, Filter, Heart, Leaf, LocateFixed, LockKeyhole, Mail, MapPin, Menu, Minus, Plus, Search, Share2, SlidersHorizontal, Soup, Sprout, Store, Utensils, UserRound, X } from 'lucide-react';
 
 type Food = { id:string; title:string; category:string; donor:string; donorType:string; qty:number; unit:string; deadline:string; time:string; area:string; city:string; image:string; description:string; storage:string; diet:string; sample?:true; };
@@ -26,36 +28,74 @@ function Header({location,user}:{location:string;user:{name:string}}) {
 function BottomNav(){return <nav className="bottom-nav"><NavLink to="/explore"><Compass/>Explore</NavLink><NavLink to="/saved"><Bookmark/>Saved</NavLink><NavLink className="bottom-donate" to="/donate"><Plus/>Donate</NavLink><NavLink to="/requests"><Clock3/>Requests</NavLink><NavLink to="/account"><Menu/>Account</NavLink></nav>;}
 function App(){
  const [location,setLocation]=useState(()=>localStorage.getItem('foodie-location')??'Chennai');
- const [foods,setFoods]=useState<Food[]>(()=>read('foodie-foods',seed));
- const [saved,setSaved]=useState<string[]>(()=>read('foodie-saved',[]));
- const [requests,setRequests]=useState<any[]>(()=>read('foodie-requests',[]));
- const [user,setUser]=useState<{name:string;type:string;email?:string}>(()=>read('foodie-user',{name:'Guest',type:'Individual'}));
- const route=useLocation();
- const isAuthRoute=route.pathname==='/signin'||route.pathname==='/signup';
- const completeAuth=(profile:{name:string;type:string;email:string})=>{setUser(profile);write('foodie-demo-profile',profile);write('foodie-demo-session',profile);notify('You are signed in to this browser demo.');};
+ const [foods,setFoods]=useState<Food[]>([]);
+ const [myDonations,setMyDonations]=useState<Food[]>([]);
+ const [saved,setSaved]=useState<string[]>([]);
+ const [requests,setRequests]=useState<any[]>([]);
+ const [user,setUser]=useState<{name:string;type:string;email?:string;language?:'en'|'ta'|'te'}>({name:'Guest',type:'Individual',language:'ta'});
  const [query,setQuery]=useState('');
  const [category,setCategory]=useState('All food');
  const [toast,setToast]=useState('');
- useEffect(()=>{
+ const [loadingFoods,setLoadingFoods]=useState(true);
+ const route=useLocation();
+ const isAuthRoute=route.pathname==='/signin'||route.pathname==='/signup';
+ const notify=(message:string)=>{setToast(message);window.setTimeout(()=>setToast(''),3200);};
+ const chooseLocation=(value:string)=>{setLocation(value);localStorage.setItem('foodie-location',value);};
+ const refreshFoods=async()=>{try{const data=await discoverFood(location,query);setFoods(data as Food[]);}catch(e){notify(e instanceof Error?e.message:'Could not load food listings.');}finally{setLoadingFoods(false);}};
+ const refreshMemberData=async()=>{
   if(!supabase)return;
+  const {data:{session}}=await supabase.auth.getSession();
+  if(!session?.user){setSaved([]);setRequests([]);setMyDonations([]);return;}
+  try{
+   const [ids,reqs,donations]=await Promise.all([getSavedIds(),getMyRequests(),myFoodListings()]);
+   setSaved(ids);setRequests(reqs);setMyDonations(donations as Food[]);
+  }catch(e){notify(e instanceof Error?e.message:'Could not load your FOODIE activity.');}
+ };
+ useEffect(()=>{
+  if(!supabase){setUser({name:'Guest',type:'Individual',language:'ta'});setLoadingFoods(false);return;}
   let alive=true;
   const load=async(session:any)=>{
-   if(!session?.user){if(alive)setUser({name:'Guest',type:'Individual'});return;}
-   const {data}=await supabase!.from('profiles').select('full_name,role,preferred_language').eq('id',session.user.id).maybeSingle();
-   if(alive)setUser({name:data?.full_name||session.user.user_metadata?.full_name||session.user.email?.split('@')[0]||'Member',type:data?.role==='organisation'?'Organisation':'Individual',email:session.user.email});
+   if(!session?.user){if(alive){setUser({name:'Guest',type:'Individual',language:'ta'});setSaved([]);setRequests([]);setMyDonations([]);}return;}
+   const {data,error}=await supabase!.from('profiles').select('full_name,role,preferred_language').eq('id',session.user.id).maybeSingle();
+   if(!alive)return;
+   if(error){notify('Your account profile could not be loaded.');return;}
+   const role=data?.role;
+   setUser({name:data?.full_name||session.user.user_metadata?.full_name||session.user.email?.split('@')[0]||'Member',type:role==='organisation'?'Organisation':'Individual',email:session.user.email,language:(data?.preferred_language||'ta') as 'en'|'ta'|'te'});
+   void refreshMemberData();
   };
   supabase.auth.getSession().then(({data})=>load(data.session));
   const {data:{subscription}}=supabase.auth.onAuthStateChange((_event,session)=>{void load(session);});
   return()=>{alive=false;subscription.unsubscribe();};
  },[]);
- useEffect(()=>write('foodie-foods',foods),[foods]); useEffect(()=>write('foodie-saved',saved),[saved]); useEffect(()=>write('foodie-requests',requests),[requests]); useEffect(()=>write('foodie-user',user),[user]);
- const notify=(s:string)=>{setToast(s);window.setTimeout(()=>setToast(''),2800);};
- const toggleSave=(id:string)=>setSaved(old=>old.includes(id)?old.filter(x=>x!==id):[...old,id]);
- const chooseLocation=(value:string)=>{setLocation(value);localStorage.setItem('foodie-location',value);};
- const gps=()=>{if(!navigator.geolocation){notify('Location is not supported by this browser.');return;}navigator.geolocation.getCurrentPosition(p=>{const value=`${p.coords.latitude.toFixed(4)}, ${p.coords.longitude.toFixed(4)}`;chooseLocation(value);notify('GPS coordinates captured. Type your area or city to filter listings; place-name lookup is not connected yet.');},()=>notify('Location permission was not granted. You can type an area or city instead.'),{timeout:9000,maximumAge:60000});};
- const addRequest=(food:Food,qty:number)=>{if(qty<1||qty>food.qty){notify('That quantity is no longer available.');return;}setRequests((r:any[])=>[{id:'REQ-'+Math.random().toString(36).slice(2,8).toUpperCase(),foodId:food.id,title:food.title,qty,status:'Requested',deadline:food.deadline,created:new Date().toISOString()},...r]);setFoods(f=>f.map(x=>x.id===food.id?{...x,qty:Math.max(0,x.qty-qty)}:x));notify('Demo request saved. No food has been reserved.');};
- const addFood=(f:Food)=>{setFoods(old=>[f,...old]);notify('Your sample donation has been published on this device.');};
- const filtered=useMemo(()=>{const terms=location.split(',').map(x=>x.trim().toLowerCase()).filter(Boolean);return foods.filter(f=>(category==='All food'||f.category===category)&&[f.title,f.category,f.donor,f.area].join(' ').toLowerCase().includes(query.toLowerCase())&&(!terms.length||terms.every(term=>f.area.toLowerCase().includes(term)||f.city.toLowerCase().includes(term)))&&f.qty>0);},[foods,category,query,location]);
+ useEffect(()=>{setLoadingFoods(true);void refreshFoods();},[location,query]);
+ const toggleSave=async(id:string)=>{
+  const wasSaved=saved.includes(id);
+  if(!supabase){notify('Food saving is unavailable until the backend is configured.');return;}
+  try{await toggleSavedListing(id,wasSaved);setSaved(old=>wasSaved?old.filter(x=>x!==id):[...old,id]);notify(wasSaved?'Removed from saved food.':'Saved for later.');}
+  catch(e){notify(e instanceof Error?e.message:'Could not update saved food.');}
+ };
+ const gps=()=>{if(!navigator.geolocation){notify('Location is not supported by this browser.');return;}navigator.geolocation.getCurrentPosition(p=>{const value=`${p.coords.latitude.toFixed(4)}, ${p.coords.longitude.toFixed(4)}`;chooseLocation(value);notify('GPS captured. Enter your neighbourhood name to find nearby listings.');},()=>notify('Location permission was not granted. You can type your area or city instead.'),{timeout:9000,maximumAge:60000});};
+ const addRequest=async(food:Food,qty:number)=>{
+  if(!supabase){notify('Food reservations are unavailable.');return;}
+  try{await reserveFood(food.id,qty);notify('Your food request has been sent to the donor.');await Promise.all([refreshFoods(),refreshMemberData()]);}
+  catch(e){notify(e instanceof Error?e.message:'Could not reserve this food. Please refresh and try again.');}
+ };
+ const addFood=async(input:any)=>{
+  try{
+   const parts=location.split(',').map((x:string)=>x.trim()).filter(Boolean);
+   const knownCity=parts.find((x:string)=>/chennai|coimbatore|madurai|tiruchirappalli|salem|tirunelveli|vellore|erode|thanjavur|hyderabad|vijayawada|visakhapatnam|warangal|bengaluru|bangalore/i.test(x));
+   const city=knownCity||'Chennai';
+   await publishFood({...input,city});
+   notify('Your food listing is now live for the community.');
+   await Promise.all([refreshFoods(),refreshMemberData()]);
+  }catch(e){notify(e instanceof Error?e.message:'Your food could not be published.');throw e;}
+ };
+ const saveProfile=async(name:string,type:string)=>{
+  try{await updateProfile(name,user.language||'ta');setUser(old=>({...old,name,type}));notify('Your profile has been updated.');}
+  catch(e){notify(e instanceof Error?e.message:'Could not update your profile.');}
+ };
+ const filtered=useMemo(()=>foods.filter(f=>(category==='All food'||f.category===category)&&f.qty>0),[foods,category]);
+ const completeAuth=(profile:{name:string;type:string;email:string})=>{setUser({...profile,language:'ta'});notify('Welcome to FOODIE. Your account is connected.');void refreshMemberData();};
  return <><Header location={location} user={user}/><Routes>
  <Route path="/signin" element={<AuthPage mode="signin" onAuth={completeAuth}/>}/>
  <Route path="/signup" element={<AuthPage mode="signup" onAuth={completeAuth}/>}/>
@@ -64,12 +104,12 @@ function App(){
  <Route path="/food/:id" element={<Details foods={foods} addRequest={addRequest} saved={saved} toggleSave={toggleSave}/>}/>
  <Route path="/donate" element={<Donate addFood={addFood} location={location}/>}/>
  <Route path="/saved" element={<Saved foods={foods.filter(f=>saved.includes(f.id))} toggleSave={toggleSave}/>}/>
- <Route path="/requests" element={<Requests requests={requests}/>}/>
- <Route path="/donations" element={<Donations foods={foods.filter(f=>!seed.some(s=>s.id===f.id))} setFoods={setFoods}/>}/>
- <Route path="/account" element={<Account user={user} setUser={setUser} notify={notify}/>}/>
+ <Route path="/requests" element={<Requests requests={requests} onCancel={async(id:string)=>{try{await cancelFoodRequest(id);notify('Request cancelled and quantity released.');await Promise.all([refreshFoods(),refreshMemberData()]);}catch(e){notify(e instanceof Error?e.message:'Could not cancel request.');}}}/>}/>
+ <Route path="/donations" element={<Donations foods={myDonations} refresh={refreshMemberData} notify={notify}/>}/>
+ <Route path="/account" element={<Account user={user} saveProfile={saveProfile} notify={notify}/>}/>
  <Route path="/how" element={<How/>}/>
  <Route path="*" element={<main className="page narrow"><h1>That page wandered off.</h1><Link to="/">Back to food discovery <ArrowRight size={16}/></Link></main>}/>
- </Routes>{!isAuthRoute&&<BottomNav/>}{toast&&<div className="toast" role="status"><Check size={17}/>{toast}</div>}<FoodCompanion location={location} userName={user.name}/><footer className="footer"><Link to="/" className="brand"><span className="brand-mark"><Sprout size={17}/></span>foodie<span className="brand-period">.</span></Link><span>Good food deserves another chance.</span><span>© 2026 FOODIE · Demo experience</span></footer></>;
+ </Routes>{!isAuthRoute&&<BottomNav/>}{toast&&<div className="toast" role="status"><Check size={17}/>{toast}</div>}{loadingFoods&&<span className="sr-only" aria-live="polite">Loading food listings</span>}<FoodCompanion location={location} userName={user.name}/><footer className="footer"><Link to="/" className="brand"><span className="brand-mark"><Sprout size={17}/></span>foodie<span className="brand-period">.</span></Link><span>Good food deserves another chance.</span><span>© 2026 FOODIE · Community food sharing</span></footer></>;
 }
 
 function FoodImage({src,alt,category,className}:{src:string;alt:string;category:string;className?:string}){
