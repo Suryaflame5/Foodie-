@@ -7,4 +7,4 @@ Disallow: /saved
 Disallow: /requests
 Disallow: /donations
 
-Sitemap: https://foodie-liart-one.vercel.app/sitemap.xml
+Sitemap: https://everkindhub.netlify.app/sitemap.xml
