@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, Building2, CheckCircle2, CircleHelp, HeartHandshake, Leaf, MapPin, ShieldCheck, Sprout, Users, Utensils } from 'lucide-react';
 import FoodCompanion from './FoodCompanion';
@@ -5,7 +6,7 @@ import FoodCompanion from './FoodCompanion';
 function Eyebrow({children}:{children:string}) {
   return <div className="eyebrow"><span className="eyebrow-line" />{children}</div>;
 }
-function PublicHero({eyebrow,title,description,action,actionLabel}:{eyebrow:string;title:React.ReactNode;description:string;action?:string;actionLabel?:string}) {
+function PublicHero({eyebrow,title,description,action,actionLabel}:{eyebrow:string;title:ReactNode;description:string;action?:string;actionLabel?:string}) {
   return <section className="public-hero">
     <Eyebrow>{eyebrow}</Eyebrow>
     <h1>{title}</h1>
@@ -13,7 +14,7 @@ function PublicHero({eyebrow,title,description,action,actionLabel}:{eyebrow:stri
     {action&&actionLabel&&<Link className="btn btn-dark" to={action}>{actionLabel}<ArrowRight size={16}/></Link>}
   </section>;
 }
-function ValueRow({icon,title,body}:{icon:React.ReactNode;title:string;body:string}) {
+function ValueRow({icon,title,body}:{icon:ReactNode;title:string;body:string}) {
   return <article className="public-value"><span className="public-value-icon">{icon}</span><div><h2>{title}</h2><p>{body}</p></div></article>;
 }
 export function OrganizationsPage() {
@@ -58,15 +59,12 @@ export function ContactPage() {
   return <main className="page page-content public-page">
     <PublicHero eyebrow="CONTACT & HELP" title={<>A good conversation<br/><em>starts here.</em></>} description="Need help finding food, sharing a listing or understanding how collection works? Start with the right place below."/>
     <section className="contact-options">
-      <article><MessageIcon/><h2>Find food or ask a question</h2><p>Use the Everkind assistant for help searching current listings in English, Tamil or Telugu. It can only describe food returned by the live listings.</p><Link to="/assistant">Open the assistant <ArrowRight size={15}/></Link></article>
+      <article><HeartHandshake/><h2>Find food or ask a question</h2><p>Use the Everkind assistant for help searching current listings in English, Tamil or Telugu. It can only describe food returned by the live listings.</p><Link to="/assistant">Open the assistant <ArrowRight size={15}/></Link></article>
       <article><MapPin/><h2>Coordinate a collection</h2><p>For a specific donation, send a request from its listing. Donor contact details are shared through the existing request flow when the donor accepts.</p><Link to="/explore">Browse food listings <ArrowRight size={15}/></Link></article>
       <article><CircleHelp/><h2>Account and listing support</h2><p>A public support email or ticket channel has not been configured yet. We will publish one here when it is connected and monitored.</p><Link to="/how">Read how Everkind works <ArrowRight size={15}/></Link></article>
     </section>
   </main>;
 }
-function MessageIcon(){return <HeartHandshake size={23}/>;}
-function MapPin(){return <MapPinIcon/>;}
-function MapPinIcon(){return <MapPin size={23}/>;}
 export function PrivacyPage() {
   return <main className="page page-content public-page legal-page">
     <PublicHero eyebrow="PRIVACY" title={<>Your information<br/><em>deserves care.</em></>} description="This plain-language overview describes the information the current Everkind experience uses. It is a product summary, not a substitute for a complete legal privacy notice."/>
