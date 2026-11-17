@@ -99,6 +99,7 @@ language sql stable security definer set search_path=public as $
  and (p_query is null or (l.title||' '||l.category||' '||l.description) ilike '%'||p_query||'%')
  order by l.pickup_deadline asc limit greatest(1,least(p_limit,20));
 $$;
+revoke all on function public.search_food_matches(text,text,text,integer) from public;
 grant execute on function public.search_food_matches(text,text,text,integer) to anon,authenticated;
 alter table public.profiles enable row level security;
 alter table public.food_listings enable row level security;
@@ -136,3 +137,14 @@ create policy "update own food photos" on storage.objects for update to authenti
  with check(bucket_id='food-images' and (storage.foldername(name))[1]=auth.uid()::text);
 create policy "delete own food photos" on storage.objects for delete to authenticated
  using(bucket_id='food-images' and (storage.foldername(name))[1]=auth.uid()::text);
+
+
+-- Explicit Data API grants: new Supabase projects no longer expose public tables by default.
+grant usage on schema public to anon, authenticated;
+grant select on public.food_listings to anon;
+grant select, insert, update, delete on public.profiles to authenticated;
+grant select, insert, update, delete on public.food_listings to authenticated;
+grant select, insert, update, delete on public.food_requests to authenticated;
+grant select, insert, update, delete on public.saved_listings to authenticated;
+grant select, insert, update, delete on public.companion_conversations to authenticated;
+grant select, insert, update, delete on public.companion_messages to authenticated;
