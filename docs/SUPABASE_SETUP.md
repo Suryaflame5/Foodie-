@@ -1,22 +1,22 @@
-# FOODIE Supabase backend
+# Everkind Supabase backend
 
-FOODIE is connected to the Supabase project used by the application. The schema and migrations are applied, and the current feature branch connects the existing React screens to shared data.
+Everkind is connected to the Supabase project used by the application. The schema and migrations are applied, and the current feature branch connects the existing React screens to shared data.
 
 ## Project configuration
 
 - Project ref: `njuxgtacizzgwqymtcbc`
 - Project URL: `https://njuxgtacizzgwqymtcbc.supabase.co`
 - Region: Singapore
-- Frontend environment variables are configured in the Vercel project for Production, Preview and Development:
+- Configure the frontend environment variables in the connected Netlify site for Production and any enabled branch/deploy-preview contexts:
   - `VITE_SUPABASE_URL`
   - `VITE_SUPABASE_ANON_KEY` (Supabase publishable key)
 - Never expose a `service_role` key or AI provider key in a `VITE_` variable, browser code, Git, or chat.
 
-For local development, copy `.env.example` to `.env.local` and set the same two public values. The Vercel environment variables do not automatically populate a developer's local machine.
+For local development, copy `.env.example` to `.env.local` and set the same two public values. Netlify environment variables do not automatically populate a developer's local machine.
 
 ## Applied database migrations
 
-The live project has migrations 001–008 applied:
+The live project currently records 14 migrations. The repository contains SQL for the core schema and the subsequent lifecycle, RLS, discovery and pagination changes. The remote history also contains `secure_internal_functions_and_profile_roles`; its corresponding SQL file is not present in this branch and must be reconciled before further schema work:
 
 1. Core profiles, listings, requests, saved listings, companion history, storage bucket and RPCs.
 2. RLS hardening and reservation guards.
@@ -58,14 +58,14 @@ The database is currently empty. There are no existing profiles, listings or req
 
 ## AI companion setup — one required secret
 
-The `food-companion` Edge Function is deployed (version 2) with JWT verification enabled. It checks the signed-in user, queries current food listings, keeps conversation history, and calls an OpenAI-compatible chat-completions endpoint.
+The `food-companion` Edge Function is active (version 4) with JWT verification enabled. It checks the signed-in user, queries current food listings, keeps conversation history, and calls an OpenAI-compatible chat-completions endpoint.
 
 The function is intentionally not usable until an AI provider key is configured. In Supabase Dashboard → Edge Functions → Secrets, add:
 
 - `AI_API_KEY` — your provider key (required).
 - `AI_BASE_URL` — optional; defaults to `https://api.openai.com/v1`.
 - `AI_MODEL` — optional; defaults to `gpt-4o-mini`.
-- `APP_ORIGIN` or `APP_ORIGINS` — optional allowed frontend origin(s); production fallback is the FOODIE Vercel domain.
+- `APP_ORIGIN` or `APP_ORIGINS` — optional allowed frontend origin(s); production fallback is the Everkind Netlify domain.
 
 Then redeploy the function if you change its code:
 
@@ -73,7 +73,7 @@ Then redeploy the function if you change its code:
 supabase functions deploy food-companion
 ```
 
-Never place the AI key in Vercel's `VITE_` environment variables. Do not paste it into a chat.
+Never place the AI key in Netlify's browser-exposed `VITE_` environment variables. Do not paste it into a chat.
 
 ## Tamil, Telugu and voice accessibility
 
@@ -90,8 +90,8 @@ Speech recognition and voices are supplied by the user's browser/OS. Install the
 - Test RLS using separate donor, requester and anonymous accounts.
 - Test simultaneous reservations, cancellation/rejection release, accepted contact visibility and collection settlement with real accounts.
 - Verify Tamil/Telugu speech recognition and speech output on target Android devices.
-- Select a geocoding provider before presenting GPS-based distance or nearby ranking. Current search is city/area text matching, not GPS distance.
-- Run a complete end-to-end browser test before merging or promoting this branch to production.
+- Select a geocoding provider before presenting GPS-based distance or nearby ranking. Current search is city/area text matching, not GPS distance. The current public website does not yet provide a marker-based map or verified distance ranking.
+- Run a complete end-to-end browser test before merging or promoting this branch to production. Privacy and Terms pages are preliminary summaries and require legal review.
 
 ## Build
 
