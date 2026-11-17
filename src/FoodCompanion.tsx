@@ -18,7 +18,8 @@ export default function FoodCompanion({location,userName,preferredLanguage}:{loc
  const [autoSpeak,setAutoSpeak]=useState(true);
  const recognition=useRef<ReturnType<typeof createSpeechRecognition>>(null);
  const end=useRef<HTMLDivElement>(null);
- useEffect(()=>{end.current?.scrollIntoView({behavior:'smooth'});},[messages,busy]);\n useEffect(()=>{if(preferredLanguage){setLanguage(preferredLanguage);localStorage.setItem('foodie-language',preferredLanguage);}},[preferredLanguage]);
+ useEffect(()=>{end.current?.scrollIntoView({behavior:'smooth'});},[messages,busy]);
+ useEffect(()=>{if(preferredLanguage){setLanguage(preferredLanguage);localStorage.setItem('foodie-language',preferredLanguage);}},[preferredLanguage]);
  useEffect(()=>()=>{recognition.current?.stop();window.speechSynthesis?.cancel();},[]);
  useEffect(()=>{
   if(!open||!supabase)return;
