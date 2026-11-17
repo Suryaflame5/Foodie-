@@ -87,12 +87,12 @@ export async function toggleSavedListing(id:string, saved:boolean) {
     : await c.from('saved_listings').insert({user_id:user.id,listing_id:id});
   if(result.error) throw result.error;
 }
-export async function getMyRequests():Promise<any[]> {
+async function getRequestContact(id:string):Promise<any|null>{const {data,error}=await client().rpc('get_request_contact',{p_request_id:id});if(error)return null;return data?.[0]||null;}\nexport async function getMyRequests():Promise<any[]> {
   const {data:{user}}=await client().auth.getUser();
   if(!user) return [];
   const {data,error}=await client().from('food_requests').select('id,listing_id,quantity,status,note,created_at,food_listings(title,unit,pickup_deadline,area,city)').eq('requester_id',user.id).order('created_at',{ascending:false});
   if(error) throw error;
-  return (data||[]).map((r:any)=>({id:r.id,foodId:r.listing_id,title:r.food_listings?.title||'Food listing',qty:r.quantity,unit:r.food_listings?.unit||'items',status:r.status,deadline:r.food_listings?.pickup_deadline?deadlineLabel(r.food_listings.pickup_deadline):'—',created:r.created_at,area:r.food_listings?.area||'',city:r.food_listings?.city||''}));
+  return Promise.all((data||[]).map(async(r:any)=>({id:r.id,foodId:r.listing_id,title:r.food_listings?.title||'Food listing',qty:r.quantity,unit:r.food_listings?.unit||'items',status:r.status,deadline:r.food_listings?.pickup_deadline?deadlineLabel(r.food_listings.pickup_deadline):'—',created:r.created_at,area:r.food_listings?.area||'',city:r.food_listings?.city||'',contact:r.status==='accepted'?await getRequestContact(r.id):null})));
 }
 export async function cancelFoodRequest(id:string) {
   const {error}=await client().from('food_requests').update({status:'cancelled'}).eq('id',id);
@@ -114,7 +114,7 @@ export async function getIncomingRequests():Promise<any[]> {
   const c=client();const {data:{user}}=await c.auth.getUser();if(!user)return [];
   const {data,error}=await c.from('food_requests').select('id,listing_id,requester_id,quantity,status,note,created_at,food_listings!inner(title,unit,pickup_deadline,area,city,donor_id)').eq('food_listings.donor_id',user.id).order('created_at',{ascending:false});
   if(error) throw error;
-  return (data||[]).map((r:any)=>({id:r.id,listingId:r.listing_id,requesterId:r.requester_id,title:r.food_listings?.title||'Food listing',qty:r.quantity,unit:r.food_listings?.unit||'items',status:r.status,note:r.note,created:r.created_at,deadline:r.food_listings?.pickup_deadline?deadlineLabel(r.food_listings.pickup_deadline):'—',area:r.food_listings?.area||'',city:r.food_listings?.city||''}));
+  return Promise.all((data||[]).map(async(r:any)=>({id:r.id,listingId:r.listing_id,requesterId:r.requester_id,title:r.food_listings?.title||'Food listing',qty:r.quantity,unit:r.food_listings?.unit||'items',status:r.status,note:r.note,created:r.created_at,deadline:r.food_listings?.pickup_deadline?deadlineLabel(r.food_listings.pickup_deadline):'—',area:r.food_listings?.area||'',city:r.food_listings?.city||'',contact:r.status==='accepted'?await getRequestContact(r.id):null})));
 }
 export async function updateIncomingRequest(id:string,status:'accepted'|'rejected'|'collected') {
   const {error}=await client().from('food_requests').update({status}).eq('id',id);
