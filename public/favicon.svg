@@ -1,6 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <rect width="64" height="64" rx="17" fill="#202421"/>
-  <path d="M12 35C12 20 21 11 32 9c2 14-3 24-16 30M52 35C52 20 43 11 32 9c-2 14 3 24 16 30" fill="none" stroke="#F3F0E7" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-  <path d="M17 45c8 10 22 10 30 0" fill="none" stroke="#C66B43" stroke-width="4" stroke-linecap="round"/>
-  <circle cx="32" cy="9" r="3.3" fill="#C66B43"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-labelledby="title">
+  <title id="title">Everkind symbol</title>
+  <rect x="4" y="4" width="120" height="120" rx="34" fill="#202421"/>
+  <path d="M64 27C49 8 29 13 27 31c-1 13 11 23 31 25 0-13 2-22 6-29Z" fill="#C66B43"/>
+  <path d="M64 27c15-19 35-14 37 4 1 13-11 23-31 25 0-13-2-22-6-29Z" fill="#F3F0E7"/>
+  <path d="M23 72c7-13 21-20 41-20s34 7 41 20c-2 24-19 39-41 39S25 96 23 72Z" fill="#F3F0E7"/>
+  <path d="M26 76c14-8 29-8 43 0 12 7 23 7 33 1-3 19-18 32-38 32-17 0-31-12-38-33Z" fill="#C66B43"/>
+  <path d="M47 81c10 6 23 6 34-1" fill="none" stroke="#202421" stroke-width="5" stroke-linecap="round"/>
 </svg>
