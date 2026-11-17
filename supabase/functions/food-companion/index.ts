@@ -1,5 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-const allowedOrigins=(Deno.env.get("APP_ORIGINS")??Deno.env.get("APP_ORIGIN")??"https://foodie-liart-one.vercel.app").split(",").map(v=>v.trim()).filter(Boolean);
+const allowedOrigins=(Deno.env.get("APP_ORIGINS")??Deno.env.get("APP_ORIGIN")??"https://everkindhub.netlify.app").split(",").map(v=>v.trim()).filter(Boolean);
 const isAllowedOrigin=(origin:string)=>allowedOrigins.includes(origin)
  || /^https:\/\/foodie-[a-z0-9-]+-surya-s-projects-ce912c20\.vercel\.app$/i.test(origin)
  || origin==="http://localhost:5173" || origin==="http://127.0.0.1:5173";
