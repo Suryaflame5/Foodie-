@@ -87,7 +87,8 @@ export async function toggleSavedListing(id:string, saved:boolean) {
     : await c.from('saved_listings').insert({user_id:user.id,listing_id:id});
   if(result.error) throw result.error;
 }
-async function getRequestContact(id:string):Promise<any|null>{const {data,error}=await client().rpc('get_request_contact',{p_request_id:id});if(error)return null;return data?.[0]||null;}\nexport async function getMyRequests():Promise<any[]> {
+async function getRequestContact(id:string):Promise<any|null>{const {data,error}=await client().rpc('get_request_contact',{p_request_id:id});if(error)return null;return data?.[0]||null;}
+export async function getMyRequests():Promise<any[]> {
   const {data:{user}}=await client().auth.getUser();
   if(!user) return [];
   const {data,error}=await client().from('food_requests').select('id,listing_id,quantity,status,note,created_at,food_listings(title,unit,pickup_deadline,area,city)').eq('requester_id',user.id).order('created_at',{ascending:false});
