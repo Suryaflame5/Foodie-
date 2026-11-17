@@ -1,8 +1,8 @@
 {
   "id": "/",
-  "name": "Everkind — Community Food Sharing",
-  "short_name": "Everkind",
-  "description": "Share surplus food, find food nearby and pass kindness forward.",
+  "name": "EverkindHub — Community Food Sharing",
+  "short_name": "EverkindHub",
+  "description": "Find surplus food nearby, share extra meals and pass kindness forward.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
