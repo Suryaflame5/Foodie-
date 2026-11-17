@@ -55,3 +55,12 @@
 .account-signout{margin-left:10px}
 @media(max-width:900px){.auth-shell{grid-template-columns:.82fr 1.18fr}.auth-side{padding-left:6%}.auth-art-copy h2{font-size:50px}}
 @media(max-width:700px){.auth-shell{width:100%;padding:0 5% 35px;display:flex;flex-direction:column;min-height:auto}.auth-art{min-height:230px;height:230px;margin:20px 0 0}.auth-art-brand{top:17px;left:18px;font-size:19px}.auth-art-copy{left:7%;right:7%;bottom:9%}.auth-art-copy h2{font-size:36px;margin:10px 0 7px;line-height:.96}.auth-art-copy p{font-size:10px;line-height:1.55;margin:0;max-width:270px}.auth-kicker{font-size:8px}.auth-art-foot{margin-top:13px;padding-top:9px;font-size:7px}.auth-side{padding:20px 0 0}.auth-topline{font-size:7px}.auth-card{padding:35px 0 28px;margin:0;width:100%}.auth-card h1{font-size:42px;margin:15px 0 10px}.auth-intro{font-size:11px;margin-bottom:22px}.auth-side-foot{margin-top:0;padding-top:12px}.account-auth-actions{align-items:stretch}.account-auth-actions .btn{flex:1}.account-signout{margin:12px 0 0}}
+
+
+/* Location search and location-aware discovery */
+.location-control{min-width:245px;max-width:340px;flex:0 1 310px}
+.location-control input{width:100%;min-width:0;border:0;outline:0;background:transparent;font-size:12px;color:var(--ink)}
+.location-control input::placeholder{color:#92968d}
+.location-control button{flex:0 0 auto}
+.explore-toolbar .location-control{max-width:300px}
+@media(max-width:700px){.location-control{width:100%;max-width:none;min-width:0;flex:1}.explore-toolbar .location-control{max-width:none;flex-basis:100%}.location-control input{flex:1}}
