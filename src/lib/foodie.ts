@@ -14,7 +14,7 @@ const deadlineLabel = (value: string) => new Date(value).toLocaleString(undefine
 const publicImage = (path: string | null) => path ? client().storage.from('food-images').getPublicUrl(path).data.publicUrl : '';
 const mapListing = (row: any): FoodRecord => ({
   id: row.id, title: row.title, category: row.category, donor: row.donor_name || row.donor || 'Community donor',
-  donorType: row.donor_type || 'Community member', qty: Math.max(0,Number(row.available_quantity ?? (Number(row.quantity||0)-Number(row.reserved_quantity||0)-Number(row.collected_quantity||0)))),
+  donorType: row.donor_type === 'organisation' ? 'Organisation' : row.donor_type === 'member' ? 'Individual' : row.donor_type || 'Community member', qty: Math.max(0,Number(row.available_quantity ?? (Number(row.quantity||0)-Number(row.reserved_quantity||0)-Number(row.collected_quantity||0)))),
   unit: row.unit, deadline: deadlineLabel(row.pickup_deadline), pickupDeadline: row.pickup_deadline,
   time: row.pickup_instructions || 'Coordinate collection with the donor', area: row.area, city: row.city,
   image: row.image_url || publicImage(row.image_path), imagePath: row.image_path || undefined,
@@ -23,8 +23,9 @@ const mapListing = (row: any): FoodRecord => ({
 });
 export async function discoverFood(location: string, query = ''): Promise<FoodRecord[]> {
   const parts=location.split(',').map(x=>x.trim()).filter(Boolean);
-  const city=parts.find(x=>/chennai|coimbatore|madurai|tiruchirappalli|salem|tirunelveli|vellore|erode|thanjavur|hyderabad|vijayawada|visakhapatnam|warangal|bangalore|bengaluru/i.test(x)) || parts[parts.length-1] || 'Chennai';
-  const area=parts.length>1 ? parts[0] : (city.toLowerCase()===location.toLowerCase() ? null : location);
+  const knownCity=parts.find(x=>/chennai|coimbatore|madurai|tiruchirappalli|salem|tirunelveli|vellore|erode|thanjavur|hyderabad|vijayawada|visakhapatnam|warangal|bangalore|bengaluru/i.test(x));
+  const city=knownCity || (parts.length>1 ? parts[parts.length-1] : 'Chennai');
+  const area=parts.length>1 ? parts.find(x=>x.toLowerCase()!==city.toLowerCase()) : (city.toLowerCase()===location.toLowerCase() || /^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(location) ? null : location);
   const {data,error}=await client().rpc('search_food_matches',{p_city:city,p_area:area,p_query:null,p_limit:20});
   if(error) throw error;
   return (data||[]).map((r:any)=>mapListing(r)).filter((f:FoodRecord)=>!query || [f.title,f.category,f.donor,f.area,f.description].join(' ').toLowerCase().includes(query.toLowerCase()));
