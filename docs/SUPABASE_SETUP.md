@@ -30,8 +30,9 @@ The live project currently records 15 migrations. The repository contains SQL fo
 10. Preparation-time and allergen data in discovery.
 11. Pickup-window and storage-instruction discovery output.
 12. Guard direct edits to reserved/collected inventory and prevent deactivating listings with outstanding reservations.
-13. Add discovery indexes and cursor pagination for scalable food search.
-14. Secure legacy reservation RPCs with authenticated requester checks, quantity validation and fixed search paths.
+13. Add trigram and city/deadline indexes for food discovery.
+14. Add cursor-based pagination for food discovery.
+15. Secure legacy reservation RPCs with authenticated requester checks, quantity validation and fixed search paths.
 
 Use the Supabase CLI for future changes after reviewing the SQL:
 
