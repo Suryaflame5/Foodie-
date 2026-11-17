@@ -38,7 +38,7 @@ function App(){
  const addFood=(f:Food)=>{setFoods(old=>[f,...old]);notify('Your sample donation has been published on this device.');};
  const filtered=useMemo(()=>foods.filter(f=>(category==='All food'||f.category===category)&&[f.title,f.category,f.donor,f.area].join(' ').toLowerCase().includes(query.toLowerCase())&&f.qty>0),[foods,category,query]);
  return <><Header location={location}/><Routes>
- <Route path="/" element={<Home foods={filtered} all={foods} query={query} setQuery={setQuery} category={category} setCategory={setCategory} toggleSave={toggleSave} saved={saved} gps={gps} location={location} setLocation={v=>{setLocation(v);localStorage.setItem('foodie-location',v);}}/>}/>
+ <Route path="/" element={<Home foods={filtered} all={foods} query={query} setQuery={setQuery} category={category} setCategory={setCategory} toggleSave={toggleSave} saved={saved} gps={gps} location={location} setLocation={(v:string)=>{setLocation(v);localStorage.setItem('foodie-location',v);}}/>}/>
  <Route path="/explore" element={<Explore foods={filtered} query={query} setQuery={setQuery} category={category} setCategory={setCategory} saved={saved} toggleSave={toggleSave}/>}/>
  <Route path="/food/:id" element={<Details foods={foods} addRequest={addRequest} saved={saved} toggleSave={toggleSave}/>}/>
  <Route path="/donate" element={<Donate addFood={addFood} location={location}/>}/>
