@@ -141,6 +141,7 @@ function App(){
  const filtered=useMemo(()=>foods.filter(f=>(category==='All food'||f.category===category)&&f.qty>0),[foods,category]);
  const completeAuth=(profile:{name:string;type:string;email:string})=>{setUser({...profile,language:'ta'});notify('Welcome to Everkind. Your account is connected.');void refreshMemberData();};
  return <><Header location={location} user={user} language={user.language||'ta'} onLanguage={changeLanguage}/><Routes>
+ <Route path="/auth/confirm" element={<EmailConfirmationPage/>}/>
  <Route path="/signin" element={<AuthPage mode="signin" onAuth={completeAuth}/>}/>
  <Route path="/signup" element={<AuthPage mode="signup" onAuth={completeAuth}/>}/>
  <Route path="/" element={<Home language={user.language||'ta'} foods={filtered} all={foods} query={query} setQuery={setQuery} category={category} setCategory={setCategory} toggleSave={toggleSave} saved={saved} gps={gps} location={location} setLocation={chooseLocation} allFoods={foods}/>}/>
@@ -173,11 +174,45 @@ function FoodImage({src,alt,category,className}:{src:string;alt:string;category:
  };
  return <img className={className||''} src={src} alt={alt} loading="lazy" onError={e=>{const img=e.currentTarget;const attempts=fallbacks[category]||fallbacks['Prepared meals'];const index=Number(img.dataset.fallback||'0');if(index<attempts.length){img.dataset.fallback=String(index+1);img.src=attempts[index];}else{img.style.opacity='0';}}}/>;
 }
+
+function EmailConfirmationPage(){
+ const navigate=useNavigate();
+ const [status,setStatus]=useState<'checking'|'success'|'error'>('checking');
+ const [message,setMessage]=useState('Confirming your Everkind account…');
+ useEffect(()=>{
+  let active=true;
+  const confirm=async()=>{
+   if(!supabase){if(active){setStatus('error');setMessage('Everkind authentication is temporarily unavailable.');}return;}
+   const params=new URLSearchParams(window.location.search);
+   const tokenHash=params.get('token_hash');
+   const type=params.get('type');
+   if(!tokenHash||type!=='email'){if(active){setStatus('error');setMessage('This confirmation link is incomplete. Request a fresh email and try again.');}return;}
+   const {error}=await supabase.auth.verifyOtp({token_hash:tokenHash,type:'email'});
+   if(!active)return;
+   if(error){setStatus('error');setMessage(error.message.toLowerCase().includes('expired')?'This confirmation link has expired or was already used. Please request a new one.':error.message);return;}
+   setStatus('success');setMessage('Your email is confirmed. Welcome to Everkind!');
+   window.setTimeout(()=>navigate('/account',{replace:true}),1400);
+  };
+  void confirm();
+  return()=>{active=false;};
+ },[navigate]);
+ return <main className="page page-content narrow" style={{minHeight:'65vh',display:'grid',placeItems:'center',textAlign:'center'}}>
+  <section style={{maxWidth:520}}>
+   <div className="eyebrow">EVERKIND · ACCOUNT CONFIRMATION</div>
+   <h1>{status==='success'?'You’re all set.':status==='error'?'We couldn’t confirm your email.':'Confirming your email…'}</h1>
+   <p className="page-intro">{message}</p>
+   {status==='success'&&<p>You can now sign in and start sharing good food with your community.</p>}
+   {status==='error'&&<Link className="btn btn-dark" to="/signup">Return to sign up <ArrowRight size={16}/></Link>}
+   {status==='checking'&&<p>Please keep this page open for a moment.</p>}
+  </section>
+ </main>;
+}
+
 function AuthPage({mode,onAuth}:{mode:'signin'|'signup';onAuth:(profile:{name:string;type:string;email:string})=>void}){
  const navigate=useNavigate();const [name,setName]=useState('');const [email,setEmail]=useState('');const [password,setPassword]=useState('');const [type,setType]=useState('Individual');const [error,setError]=useState('');const [busy,setBusy]=useState(false);const signup=mode==='signup';
  const submit=async(e:any)=>{e.preventDefault();setError('');if(!supabase){setError('Everkind authentication is not configured. Please try again later.');return;}if(signup&&!name.trim()){setError('Please enter your name.');return;}if(password.length<8){setError('Use at least 8 characters.');return;}setBusy(true);
   try{const cleanEmail=email.trim().toLowerCase();const result=signup
-   ? await supabase.auth.signUp({email:cleanEmail,password,options:{data:{full_name:name.trim(),preferred_language:'ta',account_type:type==='Organisation'?'organisation':'individual'}}})
+   ? await supabase.auth.signUp({email:cleanEmail,password,options:{emailRedirectTo:`${window.location.origin}/auth/confirm`,data:{full_name:name.trim(),preferred_language:'ta',account_type:type==='Organisation'?'organisation':'individual'}}})
    : await supabase.auth.signInWithPassword({email:cleanEmail,password});
    if(result.error)throw result.error;
    if(signup&&!result.data.session){setError('Check your email to confirm your account, then sign in.');return;}
