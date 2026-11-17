@@ -22,7 +22,7 @@ function Header({location,user}:{location:string;user:{name:string}}) {
 }
 function BottomNav(){return <nav className="bottom-nav"><NavLink to="/explore"><Compass/>Explore</NavLink><NavLink to="/saved"><Bookmark/>Saved</NavLink><NavLink className="bottom-donate" to="/donate"><Plus/>Donate</NavLink><NavLink to="/requests"><Clock3/>Requests</NavLink><NavLink to="/account"><Menu/>Account</NavLink></nav>;}
 function App(){
- const [location,setLocation]=useState(()=>localStorage.getItem('foodie-location')||'Chennai');
+ const [location,setLocation]=useState(()=>localStorage.getItem('foodie-location')??'Chennai');
  const [foods,setFoods]=useState<Food[]>(()=>read('foodie-foods',seed));
  const [saved,setSaved]=useState<string[]>(()=>read('foodie-saved',[]));
  const [requests,setRequests]=useState<any[]>(()=>read('foodie-requests',[]));
