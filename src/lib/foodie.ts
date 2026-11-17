@@ -26,9 +26,9 @@ export async function discoverFood(location: string, query = ''): Promise<FoodRe
   const knownCity=parts.find(x=>/chennai|coimbatore|madurai|tiruchirappalli|salem|tirunelveli|vellore|erode|thanjavur|hyderabad|vijayawada|visakhapatnam|warangal|bangalore|bengaluru/i.test(x));
   const city=knownCity || (parts.length>1 ? parts[parts.length-1] : 'Chennai');
   const area=parts.length>1 ? parts.find(x=>x.toLowerCase()!==city.toLowerCase()) : (city.toLowerCase()===location.toLowerCase() || /^-?\d+(\.\d+)?,\s*-?\d+(\.\d+)?$/.test(location) ? null : location);
-  const {data,error}=await client().rpc('search_food_matches',{p_city:city,p_area:area,p_query:null,p_limit:20});
+  const {data,error}=await client().rpc('search_food_matches',{p_city:city,p_area:area,p_query:query.trim()||null,p_limit:20});
   if(error) throw error;
-  return (data||[]).map((r:any)=>mapListing(r)).filter((f:FoodRecord)=>!query || [f.title,f.category,f.donor,f.area,f.description].join(' ').toLowerCase().includes(query.toLowerCase()));
+  return (data||[]).map((r:any)=>mapListing(r));
 }
 export async function myFoodListings(): Promise<FoodRecord[]> {
   const {data:{user},error:authError}=await client().auth.getUser();
