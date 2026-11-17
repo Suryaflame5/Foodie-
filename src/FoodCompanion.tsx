@@ -6,9 +6,9 @@ import type { AppLanguage } from './lib/supabase';
 import { createSpeechRecognition, speakText } from './lib/voice';
 
 type Message={role:'user'|'assistant';content:string};
-export default function FoodCompanion({location,userName}:{location:string;userName:string}){
+export default function FoodCompanion({location,userName,preferredLanguage}:{location:string;userName:string;preferredLanguage?:AppLanguage}){
  const [open,setOpen]=useState(false);
- const [language,setLanguage]=useState<AppLanguage>(()=>(localStorage.getItem('foodie-language') as AppLanguage)||'ta');
+ const [language,setLanguage]=useState<AppLanguage>(preferredLanguage||(localStorage.getItem('foodie-language') as AppLanguage)||'ta');
  const [messages,setMessages]=useState<Message[]>([]);
  const [text,setText]=useState('');
  const [busy,setBusy]=useState(false);
@@ -18,7 +18,7 @@ export default function FoodCompanion({location,userName}:{location:string;userN
  const [autoSpeak,setAutoSpeak]=useState(true);
  const recognition=useRef<ReturnType<typeof createSpeechRecognition>>(null);
  const end=useRef<HTMLDivElement>(null);
- useEffect(()=>{end.current?.scrollIntoView({behavior:'smooth'});},[messages,busy]);
+ useEffect(()=>{end.current?.scrollIntoView({behavior:'smooth'});},[messages,busy]);\n useEffect(()=>{if(preferredLanguage){setLanguage(preferredLanguage);localStorage.setItem('foodie-language',preferredLanguage);}},[preferredLanguage]);
  useEffect(()=>()=>{recognition.current?.stop();window.speechSynthesis?.cancel();},[]);
  useEffect(()=>{
   if(!open||!supabase)return;
