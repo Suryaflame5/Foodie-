@@ -16,7 +16,7 @@ For local development, copy `.env.example` to `.env.local` and set the same two 
 
 ## Applied database migrations
 
-The live project currently records 15 migrations. The repository contains SQL for the core schema and the subsequent lifecycle, RLS, discovery and pagination changes. The remote history also contains `secure_internal_functions_and_profile_roles`; its corresponding SQL file is not present in this branch and must be reconciled before further schema work:
+The live project currently records 16 migrations. The repository contains SQL for the core schema and the subsequent lifecycle, RLS, discovery and pagination changes. The remote history also contains `secure_internal_functions_and_profile_roles`; its corresponding SQL file is not present in this branch and must be reconciled before further schema work:
 
 1. Core profiles, listings, requests, saved listings, companion history, storage bucket and RPCs.
 2. RLS hardening and reservation guards.
@@ -33,6 +33,7 @@ The live project currently records 15 migrations. The repository contains SQL fo
 13. Add trigram and city/deadline indexes for food discovery.
 14. Add cursor-based pagination for food discovery.
 15. Secure legacy reservation RPCs with authenticated requester checks, quantity validation and fixed search paths.
+16. Preserve cancellation of pending and accepted requests while enforcing ownership.
 
 Use the Supabase CLI for future changes after reviewing the SQL:
 
