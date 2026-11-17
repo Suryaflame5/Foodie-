@@ -57,14 +57,14 @@ function App(){
 }
 
 function FoodImage({src,alt,category,className}:{src:string;alt:string;category:string;className?:string}){
- const fallback:Record<string,string>={
-  'Bakery':'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=1000&q=85',
-  'Vegetables':'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=1000&q=85',
-  'Prepared meals':'https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=1000&q=85',
-  'Fruit':'https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=1000&q=85',
-  'Packaged food':'https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1000&q=85'
+ const fallbacks:Record<string,string[]>={
+  'Bakery':['https://images.unsplash.com/photo-1555507036-ab1f4038808a?auto=format&fit=crop&w=1000&q=85','https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=1000&q=85'],
+  'Vegetables':['https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=1000&q=85','https://images.unsplash.com/photo-1518843875459-f738682238a6?auto=format&fit=crop&w=1000&q=85'],
+  'Prepared meals':['https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1000&q=85','https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=1000&q=85'],
+  'Fruit':['https://images.unsplash.com/photo-1490474418585-ba9bad8fd0ea?auto=format&fit=crop&w=1000&q=85','https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=1000&q=85'],
+  'Packaged food':['https://images.unsplash.com/photo-1606787366850-de6330128bfc?auto=format&fit=crop&w=1000&q=85','https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1000&q=85']
  };
- return <img className={className||''} src={src} alt={alt} loading="lazy" onError={e=>{const img=e.currentTarget;if(img.dataset.fallback==='used'){img.style.opacity='0';return;}img.dataset.fallback='used';img.src=fallback[category]||fallback['Prepared meals'];}}/>;
+ return <img className={className||''} src={src} alt={alt} loading="lazy" onError={e=>{const img=e.currentTarget;const attempts=fallbacks[category]||fallbacks['Prepared meals'];const index=Number(img.dataset.fallback||'0');if(index<attempts.length){img.dataset.fallback=String(index+1);img.src=attempts[index];}else{img.style.opacity='0';}}}/>;
 }
 function AuthPage({mode,onAuth}:{mode:'signin'|'signup';onAuth:(profile:{name:string;type:string;email:string})=>void}){
  const navigate=useNavigate();
