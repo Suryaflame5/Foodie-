@@ -2,11 +2,13 @@
   "id": "/",
   "name": "Everkind — Community Food Sharing",
   "short_name": "Everkind",
-  "description": "A community for sharing surplus food and passing kindness forward.",
+  "description": "Share surplus food, find food nearby and pass kindness forward.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#f7f5ee",
-  "theme_color": "#f7f5ee",
-  "icons": [{ "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+  "background_color": "#f3f0e7",
+  "theme_color": "#f3f0e7",
+  "icons": [
+    { "src": "/app-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
 }
