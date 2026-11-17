@@ -11,7 +11,7 @@ This branch adds the database foundation, row-level security, food-image storage
 
 Commands: supabase login; supabase link --project-ref YOUR_PROJECT_REF; supabase db push.
 
-The migration creates profiles, food listings, requests, saved listings, companion conversations/messages, RLS policies, a transactional reservation RPC, discovery RPC and food-images bucket.
+The ordered migrations create profiles, food listings, requests, saved listings, companion conversations/messages, private profile policies, non-recursive RLS helpers, inventory guards, transactional reservation/cancellation/collection handling, discovery RPC and the food-images bucket. Run `supabase db push` only after reviewing the SQL in `supabase/migrations/`.
 
 ## Configure the AI companion
 
@@ -21,7 +21,7 @@ The function uses an OpenAI-compatible chat-completions endpoint. Choose an AI p
 
 ## Auth and voice
 
-Supabase Auth issues JWT access tokens and refresh tokens. Enable email/password, set production Site URL and redirect URLs in Authentication > URL Configuration. Voice uses browser speech recognition/synthesis with ta-IN and te-IN locale hints. Actual language recognition and voice availability depends on browser, OS and installed language packs. Keep large text controls as a fallback; voice must not be the only way to use FOODIE.
+Supabase Auth issues signed JWT access tokens and refresh tokens; the app validates the signed-in session through Supabase Auth rather than implementing a second custom password/JWT system. Enable email/password, set production Site URL and redirect URLs in Authentication > URL Configuration. Voice uses browser speech recognition/synthesis with ta-IN and te-IN locale hints. Actual language recognition and voice availability depends on browser, OS and installed language packs. Keep large text controls as a fallback; voice must not be the only way to use FOODIE.
 
 ## Public launch checklist
 
