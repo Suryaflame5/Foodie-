@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
-import { supabase } from './lib/supabase';
+import { isSupabaseConfigured, supabase } from './lib/supabase';
 import FoodCompanion from './FoodCompanion';
 import { ArrowDown, ArrowLeft, ArrowRight, Bookmark, Check, ChefHat, Clock3, Compass, Filter, Heart, Leaf, LocateFixed, LockKeyhole, Mail, MapPin, Menu, Minus, Plus, Search, Share2, SlidersHorizontal, Soup, Sprout, Store, Utensils, UserRound, X } from 'lucide-react';
 
