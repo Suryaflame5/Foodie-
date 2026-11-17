@@ -19,8 +19,8 @@ Deno.serve(async req=>{
   const message=String(body.message??"").trim().slice(0,3000);
   const language=(["en","ta","te"].includes(body.language)?body.language:"en") as keyof typeof langs;
   const city=String(body.city??"").trim().slice(0,80),area=String(body.area??"").trim().slice(0,80);
-  if(!message)return json({error:"Tell me what food you need."},400);
-  if(!city)return json({error:"Share your city or area so I can find available food."},400);
+  if(!message)return json({error:"Tell me what food you need."},400,origin);
+  if(!city)return json({error:"Share your city or area so I can find available food."},400,origin);
   const {data:matches,error:matchError}=await supabase.rpc("search_food_matches",{p_city:city,p_area:area||null,p_query:null,p_limit:8});
   if(matchError)throw matchError;
   let conversationId=body.conversationId?String(body.conversationId):null;
@@ -32,6 +32,8 @@ Deno.serve(async req=>{
    const {data,error}=await supabase.from("companion_conversations").insert({user_id:user.id,language,title:message.slice(0,64)}).select("id").single();
    if(error)throw error; conversationId=data.id;
   }
+  const {error:conversationUpdateError}=await supabase.from("companion_conversations").update({language,updated_at:new Date().toISOString()}).eq("id",conversationId).eq("user_id",user.id);
+  if(conversationUpdateError)throw conversationUpdateError;
   const {error:userMessageError}=await supabase.from("companion_messages").insert({conversation_id:conversationId,user_id:user.id,role:"user",content:message,language});
   if(userMessageError)throw userMessageError;
   const {data:history,error:historyError}=await supabase.from("companion_messages").select("role,content").eq("conversation_id",conversationId).eq("user_id",user.id).order("created_at",{ascending:true}).limit(12);
@@ -40,10 +42,10 @@ Deno.serve(async req=>{
   const system="You are FOODIE's warm practical food-sharing companion. Reply only in "+langs[language]+". Use short simple spoken sentences suitable for people with low literacy. Never shame anyone. Only describe listings in the supplied live data; never invent availability, distance or directions. If there are no matches, ask one simple question about food, quantity or area. Tell users to coordinate collection with donors. If someone has surplus food to share, guide them to the Share Food action in the app; never claim you published a listing. Do not guarantee food safety; encourage checking preparation time, allergens, packaging and condition.";
   const conversationMessages=(history??[]).map((m:any)=>({role:m.role,content:m.content}));
   const base=(Deno.env.get("AI_BASE_URL")??"https://api.openai.com/v1").replace(/\/$/,"");
-  const ai=await fetch(base+"/chat/completions",{method:"POST",headers:{"Authorization":"Bearer "+apiKey,"Content-Type":"application/json"},body:JSON.stringify({model:Deno.env.get("AI_MODEL")??"gpt-4o-mini",temperature:0.35,max_tokens:420,messages:[{role:"system",content:system+"\nCurrent location: "+area+", "+city+". Current live listings (the only food availability source): "+JSON.stringify(grounded)},{role:"system",content:"If the conversation mentions earlier food needs, use the prior messages below, but always check only the current live listings."},...conversationMessages]})});
+  const ai=await fetch(base+"/chat/completions",{method:"POST",headers:{"Authorization":"Bearer "+apiKey,"Content-Type":"application/json"},signal:AbortSignal.timeout(20000),body:JSON.stringify({model:Deno.env.get("AI_MODEL")??"gpt-4o-mini",temperature:0.35,max_tokens:420,messages:[{role:"system",content:system+"\nCurrent location: "+area+", "+city+". Current live listings (the only food availability source): "+JSON.stringify(grounded)},{role:"system",content:"If the conversation mentions earlier food needs, use the prior messages below, but always check only the current live listings."},...conversationMessages]})});
   if(!ai.ok){console.error("AI provider failed",ai.status,(await ai.text()).slice(0,400));return json({error:"I could not reach the companion. Please try again."},502,origin);}
   const result=await ai.json(),reply=String(result.choices?.[0]?.message?.content??"").trim();
-  if(!reply)return json({error:"I could not form a reply. Please try again."},502);
+  if(!reply)return json({error:"I could not form a reply. Please try again."},502,origin);
   const {error:assistantMessageError}=await supabase.from("companion_messages").insert({conversation_id:conversationId,user_id:user.id,role:"assistant",content:reply,language});
   if(assistantMessageError)throw assistantMessageError;
   return json({reply,language,conversationId,matches:grounded},200,origin);
