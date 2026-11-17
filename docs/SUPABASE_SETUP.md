@@ -58,7 +58,7 @@ The database is currently empty. There are no existing profiles, listings or req
 
 ## AI companion setup — one required secret
 
-The `food-companion` Edge Function is active (version 4) with JWT verification enabled. It checks the signed-in user, queries current food listings, keeps conversation history, and calls an OpenAI-compatible chat-completions endpoint.
+The `food-companion` Edge Function is active (version 5) with JWT verification enabled. Its CORS policy allows the Everkind production origin and Netlify deploy-preview URLs while retaining the existing Vercel origins. It checks the signed-in user, queries current food listings, keeps conversation history, and calls an OpenAI-compatible chat-completions endpoint.
 
 The function is intentionally not usable until an AI provider key is configured. In Supabase Dashboard → Edge Functions → Secrets, add:
 
