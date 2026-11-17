@@ -26,6 +26,10 @@ The live project has migrations 001–008 applied:
 6. Move internal helper functions to the private schema and protect profile roles.
 7. Organisation signup metadata and accepted-request contact exchange.
 8. RLS policy and foreign-key index optimization.
+9. Donor-type storage and discovery output.
+10. Preparation-time and allergen data in discovery.
+11. Pickup-window and storage-instruction discovery output.
+12. Guard direct edits to reserved/collected inventory and prevent deactivating listings with outstanding reservations.
 
 Use the Supabase CLI for future changes after reviewing the SQL:
 
