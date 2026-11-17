@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 
 const siteName = 'FOODIE';
+const siteOrigin = 'https://foodie-liart-one.vercel.app';
 const pages: Record<string, { title: string; description: string; index: boolean }> = {
   '/': { title: 'Share more. Waste less.', description: 'Discover and share surplus food in your neighbourhood. Connect with neighbours, community kitchens and local businesses to give good food another chance.', index: true },
   '/explore': { title: 'Explore surplus food near you', description: 'Find available surplus food shared by neighbours, community kitchens and local businesses. Check collection details and request what you can use.', index: true },
@@ -33,12 +34,14 @@ export default function SeoManager() {
       ? { title: 'Community food listing', description: 'View food details, availability and collection information shared by the FOODIE community.', index: true }
       : { title: 'Page not found', description: 'The page you are looking for could not be found.', index: false });
     const title = `${page.title} | ${siteName}`;
-    const canonical = `${window.location.origin}${path}`;
+    const canonical = `${siteOrigin}${path}`;
+    const isPreviewHost = window.location.hostname !== new URL(siteOrigin).hostname;
     document.title = title;
     document.documentElement.lang = localStorage.getItem('foodie-language') || 'en';
     setMeta('name', 'description', page.description);
-    setMeta('name', 'robots', page.index ? 'index, follow, max-image-preview:large' : 'noindex, nofollow');
-    setMeta('name', 'googlebot', page.index ? 'index, follow, max-image-preview:large' : 'noindex, nofollow');
+    const crawlPolicy = page.index && !isPreviewHost ? 'index, follow, max-image-preview:large' : 'noindex, nofollow';
+    setMeta('name', 'robots', crawlPolicy);
+    setMeta('name', 'googlebot', crawlPolicy);
     setMeta('property', 'og:type', 'website');
     setMeta('property', 'og:site_name', siteName);
     setMeta('property', 'og:title', title);
