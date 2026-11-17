@@ -6,5 +6,6 @@ Disallow: /signup
 Disallow: /saved
 Disallow: /requests
 Disallow: /donations
+Disallow: /assistant
 
 Sitemap: https://everkindhub.netlify.app/sitemap.xml
