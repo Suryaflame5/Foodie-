@@ -6,8 +6,8 @@ import type { AppLanguage } from './lib/supabase';
 import { createSpeechRecognition, speakText } from './lib/voice';
 
 type Message={role:'user'|'assistant';content:string};
-export default function FoodCompanion({location,userName,preferredLanguage}:{location:string;userName:string;preferredLanguage?:AppLanguage}){
- const [open,setOpen]=useState(false);
+export default function FoodCompanion({location,userName,preferredLanguage,initialOpen=false,embedded=false}:{location:string;userName:string;preferredLanguage?:AppLanguage;initialOpen?:boolean;embedded?:boolean}){
+ const [open,setOpen]=useState(initialOpen);
  const [language,setLanguage]=useState<AppLanguage>(preferredLanguage||(localStorage.getItem('foodie-language') as AppLanguage)||'ta');
  const [messages,setMessages]=useState<Message[]>([]);
  const [matches,setMatches]=useState<any[]>([]);
@@ -68,8 +68,8 @@ export default function FoodCompanion({location,userName,preferredLanguage}:{loc
   try{r.start();setListening(true);setError('');}catch{setListening(false);setError('Voice input could not start.');}
  };
  const signedOut=userName==='Guest';
- return <div className="companion-root">
-  {open&&<section className="companion-panel" aria-label="FOODIE food companion">
+ return <div className={embedded?"companion-root companion-root-embedded":"companion-root"}>
+  {open&&<section className={embedded?"companion-panel companion-panel-embedded":"companion-panel"} aria-label="Everkind food companion">
    <header className="companion-head"><div><span className="companion-kicker">FOODIE COMPANION</span><strong>{language==='ta'?'உணவைக் கண்டுபிடிப்போம்':language==='te'?'ఆహారం కలిసి వెతుకుదాం':'Let’s find food together.'}</strong></div><button type="button" onClick={()=>setOpen(false)} aria-label="Close companion"><X size={20}/></button></header>
    <div className="companion-language"><span>{language==='ta'?'மொழி':language==='te'?'భాష':'Talk in'}</span><select value={language} onChange={e=>changeLanguage(e.target.value as AppLanguage)} aria-label="Choose language"><option value="ta">தமிழ் · Tamil</option><option value="te">తెలుగు · Telugu</option><option value="en">English</option></select><button type="button" className={autoSpeak?'is-listening':''} onClick={()=>setAutoSpeak(v=>!v)} aria-label={autoSpeak?'Turn off spoken replies':'Turn on spoken replies'} title={autoSpeak?'Spoken replies on':'Spoken replies off'}><Volume2 size={16}/></button></div>
    <div className="companion-messages" aria-live="polite">
@@ -86,6 +86,6 @@ export default function FoodCompanion({location,userName,preferredLanguage}:{loc
    </form>
    <p className="companion-footnote">{language==='ta'?'உணவு கிடைப்பது நேரடி பட்டியல்களைப் பொறுத்தது. சேகரிப்பை நன்கொடையாளருடன் உறுதி செய்யுங்கள்.':language==='te'?'ఆహారం ప్రత్యక్ష జాబితాల ఆధారంగా చూపబడుతుంది. సేకరణను దాతతో నిర్ధారించండి.':'Availability is based on live listings. Collection is coordinated with the donor.'}</p>
   </section>}
-  <button type="button" className="companion-launch" onClick={()=>setOpen(v=>!v)} aria-expanded={open} aria-label={open?'Close food companion':'Open food companion'}><MessageCircle size={21}/><span>{open?'Close':language==='ta'?'உணவு தேடு':language==='te'?'ఆహారం వెతుకు':'Find food'}</span></button>
+  {!embedded&&<button type="button" className="companion-launch" onClick={()=>setOpen(v=>!v)} aria-expanded={open} aria-label={open?'Close food companion':'Open food companion'}><MessageCircle size={21}/><span>{open?'Close':language==='ta'?'உணவு தேடு':language==='te'?'ఆహారం వెతుకు':'Find food'}</span></button>}
  </div>;
 }
