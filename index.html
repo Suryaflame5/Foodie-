@@ -3,38 +3,59 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#f7f5ee" />
+    <meta name="theme-color" content="#f3f0e7" />
     <meta name="color-scheme" content="light" />
     <meta name="application-name" content="Everkind" />
-    <meta name="description" content="Everkind helps neighbours, community kitchens and local businesses share surplus food, reduce waste and make sure good food reaches someone who needs it." />
+    <meta name="description" content="Share surplus food, discover food nearby and support your community. Everkind helps neighbours, community kitchens and local businesses make good food go further." />
     <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
     <meta name="googlebot" content="index, follow, max-image-preview:large" />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
-    <link rel="canonical" href="https://foodie-liart-one.vercel.app/" />
+    <link rel="canonical" href="https://everkindhub.netlify.app/" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/app-icon.svg" />
     <link rel="manifest" href="/site.webmanifest" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=DM+Serif+Display&display=swap" rel="stylesheet" />
     <meta property="og:type" content="website" />
+    <meta property="og:locale" content="en_IN" />
     <meta property="og:site_name" content="Everkind" />
     <meta property="og:title" content="Everkind — Good food. Good people. Good things ahead." />
     <meta property="og:description" content="Discover and share surplus food in your neighbourhood. A little extra can mean a lot." />
-    <meta property="og:url" content="https://foodie-liart-one.vercel.app/" />
-    <meta property="og:image" content="https://foodie-liart-one.vercel.app/everkind-social.svg" />
+    <meta property="og:url" content="https://everkindhub.netlify.app/" />
+    <meta property="og:image" content="https://everkindhub.netlify.app/everkind-social.svg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Everkind — Good food. Good people. Good things ahead." />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content="Everkind — Good food. Good people. Good things ahead." />
-    <meta name="twitter:description" content="Everkind helps good food reach people through neighbourly sharing and everyday kindness." />
-    <meta name="twitter:image" content="https://foodie-liart-one.vercel.app/everkind-social.svg" />
+    <meta name="twitter:description" content="Share surplus food, find food nearby and help good food reach people in your community." />
+    <meta name="twitter:image" content="https://everkindhub.netlify.app/everkind-social.svg" />
+    <meta name="twitter:image:alt" content="Everkind community food sharing" />
     <title>Everkind — Share more. Waste less.</title>
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "WebSite",
-        "name": "Everkind",
-        "alternateName": "Everkind Community Food Sharing",
-        "url": "https://foodie-liart-one.vercel.app/",
-        "description": "A community-powered platform that helps surplus food find a new home through neighbourly sharing and everyday kindness."
+        "@graph": [
+          {
+            "@type": "Organization",
+            "@id": "https://everkindhub.netlify.app/#organization",
+            "name": "Everkind",
+            "url": "https://everkindhub.netlify.app/",
+            "logo": "https://everkindhub.netlify.app/everkind-mark.svg",
+            "description": "A community-powered food-sharing platform that helps surplus food reach people instead of going to waste."
+          },
+          {
+            "@type": "WebSite",
+            "@id": "https://everkindhub.netlify.app/#website",
+            "name": "Everkind",
+            "alternateName": "Everkind Community Food Sharing",
+            "url": "https://everkindhub.netlify.app/",
+            "inLanguage": ["en", "ta", "te"],
+            "publisher": { "@id": "https://everkindhub.netlify.app/#organization" },
+            "description": "Share surplus food, discover food nearby and support your community."
+          }
+        ]
       }
     </script>
   </head>
