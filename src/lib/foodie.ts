@@ -19,7 +19,7 @@ const mapListing = (row: any): FoodRecord => ({
   time: row.pickup_instructions || 'Coordinate collection with the donor', area: row.area, city: row.city,
   image: row.image_url || publicImage(row.image_path), imagePath: row.image_path || undefined,
   description: row.description || '', storage: row.storage_notes || '', diet: (row.dietary_tags || []).join(' · ') || 'Not specified',
-  status: row.status, sample: false
+  allergens: row.allergen_info || [], preparedAt: row.food_prepared_at || null, status: row.status, sample: false
 });
 export async function discoverFood(location: string, query = ''): Promise<FoodRecord[]> {
   const parts=location.split(',').map(x=>x.trim()).filter(Boolean);
@@ -40,7 +40,7 @@ export async function myFoodListings(): Promise<FoodRecord[]> {
 }
 export async function publishFood(input: {
  title:string;category:string;description:string;quantity:number;unit:string;area:string;city:string;
- deadline:string;storage:string;diet:string;pickupInstructions:string;imageFile?:File|null;
+ deadline:string;storage:string;diet:string;donorType:string;allergenInfo:string;preparedAt:string;pickupInstructions:string;imageFile?:File|null;
 }): Promise<FoodRecord> {
   const c=client();
   const {data:{user},error:authError}=await c.auth.getUser();
@@ -57,7 +57,8 @@ export async function publishFood(input: {
   const {data,error}=await c.from('food_listings').insert({
     donor_id:user.id,title:input.title.trim(),category:input.category,description:input.description.trim(),
     quantity:input.quantity,unit:input.unit,area:input.area.trim(),city:input.city.trim(),
-    pickup_deadline:input.deadline,pickup_instructions:input.pickupInstructions.trim(),
+    pickup_deadline:input.deadline,pickup_instructions:input.pickupInstructions.trim(),donor_type:input.donorType,
+    food_prepared_at:input.preparedAt||null,allergen_info:input.allergenInfo.split(',').map(x=>x.trim()).filter(Boolean),
     storage_notes:input.storage.trim(),dietary_tags:input.diet.split('·').map(x=>x.trim()).filter(Boolean),
     image_path:imagePath,safety_confirmed:true,status:'available'
   }).select('*').single();
@@ -66,7 +67,7 @@ export async function publishFood(input: {
     throw error;
   }
   const {data:profile}=await c.from('profiles').select('full_name,role').eq('id',user.id).maybeSingle();
-  return mapListing({...data,donor:profile?.full_name,donor_type:profile?.role});
+  return mapListing({...data,donor:profile?.full_name,donor_type:data.donor_type||profile?.role});
 }
 export async function reserveFood(listingId:string,quantity:number,note='') {
   const {data,error}=await client().rpc('reserve_food',{p_listing_id:listingId,p_quantity:quantity,p_note:note});
