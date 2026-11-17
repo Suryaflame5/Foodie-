@@ -98,9 +98,14 @@ export async function cancelFoodRequest(id:string) {
   const {error}=await client().from('food_requests').update({status:'cancelled'}).eq('id',id);
   if(error) throw error;
 }
-export async function updateProfile(name:string,language:'en'|'ta'|'te',city='Chennai',area='') {
+export async function updateProfile(name:string,language:'en'|'ta'|'te',city='Chennai',area='',phone?:string) {
   const c=client(); const {data:{user}}=await c.auth.getUser();
   if(!user) throw new Error('Sign in to update your profile.');
-  const {error}=await c.from('profiles').update({full_name:name.trim(),preferred_language:language,city,area}).eq('id',user.id);
+  const {error}=await c.from('profiles').update({full_name:name.trim(),preferred_language:language,city,area,...(phone!==undefined?{phone:phone.trim()||null}:{})}).eq('id',user.id);
+  if(error) throw error;
+}
+
+export async function removeFoodListing(id:string) {
+  const {error}=await client().from('food_listings').update({status:'removed'}).eq('id',id);
   if(error) throw error;
 }
