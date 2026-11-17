@@ -109,3 +109,14 @@ export async function removeFoodListing(id:string) {
   const {error}=await client().from('food_listings').update({status:'removed'}).eq('id',id);
   if(error) throw error;
 }
+
+export async function getIncomingRequests():Promise<any[]> {
+  const c=client();const {data:{user}}=await c.auth.getUser();if(!user)return [];
+  const {data,error}=await c.from('food_requests').select('id,listing_id,requester_id,quantity,status,note,created_at,food_listings!inner(title,unit,pickup_deadline,area,city,donor_id)').eq('food_listings.donor_id',user.id).order('created_at',{ascending:false});
+  if(error) throw error;
+  return (data||[]).map((r:any)=>({id:r.id,listingId:r.listing_id,requesterId:r.requester_id,title:r.food_listings?.title||'Food listing',qty:r.quantity,unit:r.food_listings?.unit||'items',status:r.status,note:r.note,created:r.created_at,deadline:r.food_listings?.pickup_deadline?deadlineLabel(r.food_listings.pickup_deadline):'—',area:r.food_listings?.area||'',city:r.food_listings?.city||''}));
+}
+export async function updateIncomingRequest(id:string,status:'accepted'|'rejected'|'collected') {
+  const {error}=await client().from('food_requests').update({status}).eq('id',id);
+  if(error) throw error;
+}
