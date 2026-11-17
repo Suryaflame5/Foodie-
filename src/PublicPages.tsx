@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Building2, CheckCircle2, CircleHelp, HeartHandshake, Leaf, MapPin, ShieldCheck, Sprout, Users, Utensils } from 'lucide-react';
+import { ArrowRight, CircleHelp, HeartHandshake, Leaf, MapPin, ShieldCheck, Sprout, Users, Utensils } from 'lucide-react';
 import FoodCompanion from './FoodCompanion';
 
 function Eyebrow({children}:{children:string}) {
