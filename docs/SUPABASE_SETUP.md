@@ -60,7 +60,7 @@ Do not reapply already-recorded migrations manually.
 
 ## Showcase data
 
-The shared project currently contains 18 illustrative Chennai food listings, all marked `food_listings.is_demo = true`. They exist to make the discovery experience explorable during a hackathon demo. The discovery RPC includes these unowned demo rows while continuing to require available status, positive remaining quantity and a future pickup deadline. Demo cards are labelled in the UI and reservation is disabled for them. No fake Auth users, donor profiles, requests, reservations, collections, or impact totals are inserted. Run `supabase/seed_demo_showcase.sql` to refresh the showcase inventory; it is idempotent and resets only the stable demo listing IDs.
+The shared project currently contains 18 illustrative Chennai food listings (`food_listings.is_demo = true`), 10 fictional donor cards, 6 fictional recipient cards, and 5 simulated activity events in separate demo-only tables. They exist to make the discovery experience explorable during a hackathon demo. The discovery RPC includes these unowned demo rows while continuing to require available status, positive remaining quantity and a future pickup deadline. Demo cards are labelled in the UI and reservation is disabled for them. No fake Auth users or rows in the real `food_requests` table are inserted. Fictional donor/recipient cards and simulated request/match/collection events live in separate demo-only tables and are labelled as illustrative. Demo listings cannot be reserved, and no impact totals are represented as real. Run `supabase/seed_demo_showcase.sql` to refresh the showcase inventory; it is idempotent and resets only the stable demo listing IDs.
 
 ## AI companion setup — one required secret
 
