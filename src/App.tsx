@@ -247,11 +247,12 @@ function FoodCard({food,saved,toggleSave}:{food:Food;saved:boolean;toggleSave:(i
 function ArrowUpRightIcon(){return <ArrowRight size={16}/>;}
 function ShowcaseSection({data}:{data:ShowcaseData}){
  if(!data||(!data.locations.length&&!data.donors.length&&!data.recipients.length))return null;
+ const mealPortions=data.locations.filter(item=>item.unit==='portions').reduce((total,item)=>total+Number(item.quantity||0),0);
  const metrics=[
   {value:data.locations.length,label:'demo food listings'},
+  {value:mealPortions,label:'meal portions listed'},
   {value:data.donors.length,label:'sample donors'},
-  {value:data.recipients.length,label:'recipient groups'},
-  {value:data.activities.length,label:'simulated events'}
+  {value:data.recipients.length,label:'recipient groups'}
  ];
  const points=data.locations.map(point=>({
   ...point,
