@@ -186,32 +186,32 @@ function FoodImage({src,alt,category,className}:{src:string;alt:string;category:
 }
 
 function EmailConfirmationPage(){
- const navigate=useNavigate();const started=useRef(false);
+ const navigate=useNavigate();const confirmationPromise=useRef<Promise<string>|null>(null);
  const [status,setStatus]=useState<'checking'|'success'|'error'>('checking');
  const [message,setMessage]=useState('Confirming your Everkind account…');
  useEffect(()=>{
-  if(started.current)return;started.current=true;let active=true;
-  const confirm=async()=>{
-   if(!supabase){if(active){setStatus('error');setMessage('Everkind authentication is temporarily unavailable.');}return;}
+  let active=true;
+  const complete=async():Promise<string>=>{
+   if(!supabase)throw new Error('Everkind authentication is temporarily unavailable.');
    const url=new URL(window.location.href),params=url.searchParams,hashParams=new URLSearchParams(url.hash.replace(/^#/,''));
    const callbackError=params.get('error_description')||hashParams.get('error_description')||params.get('error')||hashParams.get('error');
-   if(callbackError){if(active){setStatus('error');setMessage(callbackError.replace(/\+/g,' '));}return;}
-   let confirmationError:Error|null=null;
+   if(callbackError)throw new Error(callbackError.replace(/\+/g,' '));
    const code=params.get('code'),tokenHash=params.get('token_hash'),type=params.get('type');
-   if(code){const {error}=await supabase.auth.exchangeCodeForSession(code);if(error)confirmationError=error;}
-   else if(tokenHash&&(type==='email'||type==='signup')){const {error}=await supabase.auth.verifyOtp({token_hash:tokenHash,type:type as 'email'|'signup'});if(error)confirmationError=error;}
-   if(confirmationError){if(active){setStatus('error');setMessage(confirmationError.message.toLowerCase().includes('expired')||confirmationError.message.toLowerCase().includes('invalid')?'This confirmation link has expired, was already used, or could not be verified. Request a fresh confirmation email.':confirmationError.message);}return;}
-   // Default Supabase ConfirmationURL verifies first and returns session tokens
-   // in the URL fragment; detectSessionInUrl processes that callback on the client.
+   if(code){const {error}=await supabase.auth.exchangeCodeForSession(code);if(error)throw error;}
+   else if(tokenHash&&(type==='email'||type==='signup')){const {error}=await supabase.auth.verifyOtp({token_hash:tokenHash,type:type as 'email'|'signup'});if(error)throw error;}
+   // The default Supabase ConfirmationURL verifies first and returns session
+   // tokens in the URL fragment; detectSessionInUrl processes that callback.
    const {data:{session},error:sessionError}=await supabase.auth.getSession();
-   if(sessionError){if(active){setStatus('error');setMessage(sessionError.message);}return;}
-   if(!session){if(active){setStatus('error');setMessage('The link returned without a verified session. Open the newest confirmation email on this device, or request a fresh link.');}return;}
+   if(sessionError)throw sessionError;
+   if(!session)throw new Error('The link returned without a verified session. Open the newest confirmation email on this device, or request a fresh link.');
    const {data:{user},error:userError}=await supabase.auth.getUser();
-   if(userError||!user?.email_confirmed_at){if(active){setStatus('error');setMessage(userError?.message||'Supabase has not marked this email address as confirmed yet. Please use the newest confirmation email.');}return;}
-   if(!active)return;setStatus('success');setMessage('Your email is confirmed. Welcome to Everkind!');
-   window.setTimeout(()=>navigate('/account',{replace:true}),1200);
+   if(userError)throw userError;
+   if(!user?.email_confirmed_at)throw new Error('Supabase has not marked this email address as confirmed yet. Please use the newest confirmation email.');
+   return 'Your email is confirmed. Welcome to Everkind!';
   };
-  void confirm().catch(err=>{if(active){setStatus('error');setMessage(err instanceof Error?err.message:'We could not complete email confirmation. Please request a new link.');}});
+  if(!confirmationPromise.current)confirmationPromise.current=complete();
+  confirmationPromise.current.then(successMessage=>{if(active){setStatus('success');setMessage(successMessage);window.setTimeout(()=>navigate('/account',{replace:true}),1200);}})
+   .catch(err=>{if(active){setStatus('error');setMessage(err instanceof Error?err.message:'We could not complete email confirmation. Please request a new link.');}});
   return()=>{active=false;};
  },[navigate]);
  return <main className="page page-content narrow" style={{minHeight:'65vh',display:'grid',placeItems:'center',textAlign:'center'}}><section style={{maxWidth:520}}>
