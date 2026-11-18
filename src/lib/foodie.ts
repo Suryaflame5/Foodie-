@@ -11,7 +11,7 @@ const client = () => {
   return supabase;
 };
 const deadlineLabel = (value: string) => new Date(value).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
-const publicImage = (path: string | null) => path ? (/^https?:\\/\\//i.test(path) ? path : client().storage.from('food-images').getPublicUrl(path).data.publicUrl) : '';
+const publicImage = (path: string | null) => path ? (path.startsWith('http://') || path.startsWith('https://') ? path : client().storage.from('food-images').getPublicUrl(path).data.publicUrl) : '';
 const mapListing = (row: any): FoodRecord => ({
   id: row.id, title: row.title, category: row.category, donor: row.donor_name || row.donor || 'Community donor',
   donorType: row.donor_type === 'organisation' ? 'Organisation' : row.donor_type === 'member' ? 'Individual' : row.donor_type || 'Community member', qty: Math.max(0,Number(row.available_quantity ?? (Number(row.quantity||0)-Number(row.reserved_quantity||0)-Number(row.collected_quantity||0)))),
