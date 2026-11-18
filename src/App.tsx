@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { isSupabaseConfigured, supabase } from './lib/supabase';
 import FoodCompanion from './FoodCompanion';
 import { AboutPage, AssistantPage, ContactPage, FoodSafetyPage, OrganizationsPage, PrivacyPage, TermsPage } from './PublicPages';
@@ -20,6 +20,7 @@ const read = <T,>(key:string,fallback:T):T => { try { const v=localStorage.getIt
 const write = (key:string,value:unknown) => localStorage.setItem(key,JSON.stringify(value));
 const categories = ['All food','Prepared meals','Vegetables','Bakery','Fruit','Packaged food'];
 const moneyless = (n:number,u:string) => `${n} ${u} available`;
+const authConfirmUrl=()=>`${window.location.origin}/auth/confirm`;
 
 function Header({location,user,language,onLanguage}:{location:string;user:{name:string};language:'en'|'ta'|'te';onLanguage:(v:'en'|'ta'|'te')=>void}) {
  const [open,setOpen]=useState(false);
@@ -33,7 +34,7 @@ function Header({location,user,language,onLanguage}:{location:string;user:{name:
   return ()=>window.removeEventListener('keydown',onKeyDown);
  },[open]);
  const labels=language==='ta'?{explore:'உணவைத் தேடு',donate:'உணவைப் பகிர',how:'எப்படி செயல்படுகிறது',org:'அமைப்புகள்',saved:'சேமித்தவை',signin:'உள்நுழை'}:language==='te'?{explore:'ఆహారం వెతుకు',donate:'ఆహారం పంచు',how:'ఎలా పనిచేస్తుంది',org:'సంస్థలు',saved:'సేవ్ చేసినవి',signin:'లాగిన్'}:{explore:'Explore food',donate:'Donate food',how:'How it works',org:'Organizations',saved:'Saved',signin:'Sign in'};
- return <header className="topbar"><Link to="/" className="brand" onClick={closeMenu}><span className="brand-mark"><img src="/everkind-mark.svg" alt="" width="30" height="30" /></span><span className="brand-word">everkind</span></Link><nav id="foodie-mobile-navigation" className={open?'nav-links nav-open':'nav-links'} aria-label="Main navigation" aria-hidden={!open}><NavLink to="/explore" onClick={closeMenu}>{labels.explore}</NavLink><NavLink to="/donate" onClick={closeMenu}>{labels.donate}</NavLink><NavLink to="/organizations" onClick={closeMenu}>{labels.org}</NavLink><a href="/#how" onClick={closeMenu}>{labels.how}</a><NavLink to="/saved" onClick={closeMenu}>{labels.saved}</NavLink></nav><div className="header-right"><span className="location-chip"><MapPin size={14}/>{location}</span><select className="language-switch" aria-label="App language" value={language} onChange={e=>onLanguage(e.target.value as 'en'|'ta'|'te')}><option value="ta">தமிழ்</option><option value="te">తెలుగు</option><option value="en">EN</option></select><Link className="sign-link" to={user.name==='Guest'?'/signin':'/account'}>{user.name==='Guest'?labels.signin:user.name} <ArrowRight size={14}/></Link></div><button type="button" className="icon-btn menu-toggle" onClick={(event)=>{event.preventDefault();event.stopPropagation();setOpen(value=>!value);}} aria-label={open?'Close navigation menu':'Open navigation menu'} aria-expanded={open} aria-controls="foodie-mobile-navigation">{open?<X size={23}/>:<Menu size={23}/>}</button></header>;
+ return <header className="topbar"><Link to="/" className="brand" onClick={closeMenu}><span className="brand-mark"><img src="/everkind-mark.svg" alt="" width="30" height="30" /></span><span className="brand-word">everkind</span></Link><button type="button" className={open?"mobile-nav-scrim is-visible":"mobile-nav-scrim"} aria-label="Close navigation menu" tabIndex={open?0:-1} onClick={closeMenu} aria-hidden={!open}/><nav id="foodie-mobile-navigation" className={open?"nav-links nav-open":"nav-links"} aria-label="Main navigation" aria-hidden={!open}><NavLink to="/explore" onClick={closeMenu}>{labels.explore}</NavLink><NavLink to="/donate" onClick={closeMenu}>{labels.donate}</NavLink><NavLink to="/organizations" onClick={closeMenu}>{labels.org}</NavLink><NavLink to="/how" onClick={closeMenu}>{labels.how}</NavLink><NavLink to="/saved" onClick={closeMenu}>{labels.saved}</NavLink></nav><div className="header-right"><span className="location-chip"><MapPin size={14}/>{location}</span><select className="language-switch" aria-label="App language" value={language} onChange={e=>onLanguage(e.target.value as 'en'|'ta'|'te')}><option value="ta">தமிழ்</option><option value="te">తెలుగు</option><option value="en">EN</option></select><Link className="sign-link" to={user.name==='Guest'?'/signin':'/account'}>{user.name==='Guest'?labels.signin:user.name} <ArrowRight size={14}/></Link></div><button type="button" className="icon-btn menu-toggle" onClick={()=>setOpen(value=>!value)} aria-label={open?'Close navigation menu':'Open navigation menu'} aria-expanded={open} aria-controls="foodie-mobile-navigation">{open?<X size={23}/>:<Menu size={23}/>}</button></header>;
 }
 function BottomNav({language}:{language:'en'|'ta'|'te'}){const labels=language==='ta'?['தேடு','சேமிப்பு','பகிர்','கோரிக்கைகள்','கணக்கு']:language==='te'?['వెతుకు','సేవ్','పంచు','అభ్యర్థనలు','ఖాతా']:['Explore','Saved','Donate','Requests','Account'];return <nav className="bottom-nav"><NavLink to="/explore"><Compass/>{labels[0]}</NavLink><NavLink to="/saved"><Bookmark/>{labels[1]}</NavLink><NavLink className="bottom-donate" to="/donate"><Plus/>{labels[2]}</NavLink><NavLink to="/requests"><Clock3/>{labels[3]}</NavLink><NavLink to="/account"><Menu/>{labels[4]}</NavLink></nav>;}
 function App(){
@@ -50,9 +51,14 @@ function App(){
  const [category,setCategory]=useState('All food');
  const [toast,setToast]=useState('');
  const [loadingFoods,setLoadingFoods]=useState(true);
+ const [authReady,setAuthReady]=useState(false);
+ const [authenticated,setAuthenticated]=useState(false);
  const [showcase,setShowcase]=useState<ShowcaseData>(emptyShowcase);
  const route=useLocation();
  const isAuthRoute=route.pathname==='/signin'||route.pathname==='/signup';
+ const isPublicAuthRoute=isAuthRoute||route.pathname==='/auth/confirm';
+ const isPublicHome=route.pathname==='/';
+ const isPublicHow=route.pathname==='/how';
  const notify=(message:string)=>{setToast(message);window.setTimeout(()=>setToast(''),3200);};
  const chooseLocation=(value:string)=>{setLocation(value);localStorage.setItem('foodie-location',value);};
  const refreshFoods=async()=>{try{const data=await discoverFood(location,query);setFoods(data as Food[]);setHasMoreFoods(data.length===20);}catch(e){notify(e instanceof Error?e.message:'Could not load food listings.');}finally{setLoadingFoods(false);}};
@@ -79,13 +85,14 @@ function App(){
  };
  useEffect(()=>{let active=true;loadShowcaseData().then(data=>{if(active)setShowcase(data);}).catch(()=>{});return()=>{active=false;};},[]);
  useEffect(()=>{
-  if(!supabase){setUser({name:'Guest',type:'Individual',language:(localStorage.getItem('foodie-language') as 'en'|'ta'|'te')||'ta'});setLoadingFoods(false);return;}
+  if(!supabase){setUser({name:'Guest',type:'Individual',language:(localStorage.getItem('foodie-language') as 'en'|'ta'|'te')||'ta'});setAuthenticated(false);setAuthReady(true);setLoadingFoods(false);return;}
   let alive=true;
   const load=async(session:any)=>{
-   if(!session?.user){if(alive){setUser({name:'Guest',type:'Individual',language:'ta'});setSaved([]);setRequests([]);setMyDonations([]);}return;}
+   if(!session?.user){if(alive){setAuthenticated(false);setAuthReady(true);setUser({name:'Guest',type:'Individual',language:'ta'});setSaved([]);setRequests([]);setIncomingRequests([]);setMyDonations([]);}return;}
+   if(alive){setAuthenticated(true);setAuthReady(true);}
    const {data,error}=await supabase!.from('profiles').select('full_name,role,preferred_language').eq('id',session.user.id).maybeSingle();
    if(!alive)return;
-   if(error){notify('Your account profile could not be loaded.');return;}
+   if(error){setUser({name:session.user.user_metadata?.full_name||session.user.email?.split('@')[0]||'Member',type:'Individual',email:session.user.email,language:'ta'});notify('Your account profile could not be loaded.');return;}
    const role=data?.role;
    setUser({name:data?.full_name||session.user.user_metadata?.full_name||session.user.email?.split('@')[0]||'Member',type:role==='organisation'?'Organisation':'Individual',email:session.user.email,language:(data?.preferred_language||'ta') as 'en'|'ta'|'te'});
    void refreshMemberData();
@@ -95,6 +102,7 @@ function App(){
   return()=>{alive=false;subscription.unsubscribe();};
  },[]);
  useEffect(()=>{
+  if(!authReady||!authenticated){setLoadingFoods(false);setFoods([]);return;}
   let active=true;
   const timer=window.setTimeout(async()=>{
    setLoadingFoods(true);
@@ -108,7 +116,7 @@ function App(){
    }
   },query.trim()?300:0);
   return()=>{active=false;window.clearTimeout(timer);};
- },[location,query]);
+ },[location,query,authReady,authenticated]);
  const toggleSave=async(id:string)=>{
   const wasSaved=saved.includes(id);
   if(!supabase){notify('Food saving is unavailable until the backend is configured.');return;}
@@ -143,11 +151,11 @@ function App(){
  };
  const filtered=useMemo(()=>foods.filter(f=>(category==='All food'||f.category===category)&&f.qty>0),[foods,category]);
  const completeAuth=(profile:{name:string;type:string;email:string})=>{setUser({...profile,language:'ta'});notify('Welcome to Everkind. Your account is connected.');void refreshMemberData();};
- return <><Header location={location} user={user} language={user.language||'ta'} onLanguage={changeLanguage}/><Routes>
+ return <>{authReady&&(authenticated&&!isPublicAuthRoute||!authenticated&&(isPublicHome||isPublicHow))&&<Header location={location} user={user} language={user.language||'ta'} onLanguage={changeLanguage}/>}{!authReady?<main className="auth-loading" role="status">Checking your session…</main>:!authenticated&&!isPublicAuthRoute&&!isPublicHome&&!isPublicHow?<Navigate to="/signin" replace/>:authenticated&&isAuthRoute?<Navigate to="/account" replace/>:<Routes>
  <Route path="/auth/confirm" element={<EmailConfirmationPage/>}/>
  <Route path="/signin" element={<AuthPage mode="signin" onAuth={completeAuth}/>}/>
  <Route path="/signup" element={<AuthPage mode="signup" onAuth={completeAuth}/>}/>
- <Route path="/" element={<Home language={user.language||'ta'} foods={filtered} all={foods} query={query} setQuery={setQuery} category={category} setCategory={setCategory} toggleSave={toggleSave} saved={saved} gps={gps} location={location} setLocation={chooseLocation} allFoods={foods} showcase={showcase}/>}/>
+ <Route path="/" element={<Home language={user.language||'ta'} authenticated={authenticated} foods={filtered} all={foods} query={query} setQuery={setQuery} category={category} setCategory={setCategory} toggleSave={toggleSave} saved={saved} gps={gps} location={location} setLocation={chooseLocation} allFoods={foods} showcase={showcase}/>}/>
  <Route path="/explore" element={<Explore language={user.language||'ta'} foods={filtered} query={query} setQuery={setQuery} category={category} setCategory={setCategory} saved={saved} toggleSave={toggleSave} location={location} setLocation={chooseLocation} gps={gps} allFoods={foods} hasMore={hasMoreFoods} loadingMore={loadingMoreFoods} loadMore={loadMoreFoods}/>}/>
  <Route path="/food/:id" element={<Details foods={foods} addRequest={addRequest} saved={saved} toggleSave={toggleSave}/>}/>
  <Route path="/donate" element={<Donate language={user.language||'ta'} addFood={addFood} location={location}/>}/>
@@ -164,7 +172,7 @@ function App(){
  <Route path="/terms" element={<TermsPage/>}/>
  <Route path="/assistant" element={<AssistantPage location={location} userName={user.name} preferredLanguage={user.language||'ta'}/>}/>
  <Route path="*" element={<main className="page narrow"><h1>That page wandered off.</h1><Link to="/">Back to food discovery <ArrowRight size={16}/></Link></main>}/>
- </Routes>{toast&&<div className="toast" role="status"><Check size={17}/>{toast}</div>}{loadingFoods&&<span className="sr-only" aria-live="polite">Loading food listings</span>}{route.pathname!=='/assistant'&&<FoodCompanion location={location} userName={user.name} preferredLanguage={user.language||'ta'}/> }<footer className="footer"><Link to="/" className="brand"><span className="brand-mark"><img src="/everkind-mark.svg" alt="" width="30" height="30" /></span><span className="brand-word">everkind</span></Link><span>Good food deserves another chance.</span><span>© 2026 Everkind · Community food sharing</span><nav className="footer-links" aria-label="Footer"><Link to="/organizations">Organizations</Link><Link to="/food-safety">Food safety</Link><Link to="/about">About</Link><Link to="/contact">Contact</Link><Link to="/privacy">Privacy</Link><Link to="/terms">Terms</Link><Link to="/assistant">Food companion</Link></nav></footer></>;
+ </Routes>}{authReady&&authenticated&&toast&&<div className="toast" role="status"><Check size={17}/>{toast}</div>}{authReady&&authenticated&&loadingFoods&&<span className="sr-only" aria-live="polite">Loading food listings</span>}{authReady&&authenticated&&route.pathname!=='/assistant'&&<FoodCompanion location={location} userName={user.name} preferredLanguage={user.language||'ta'}/> }{authReady&&authenticated&&!isPublicAuthRoute&&<footer className="footer"><Link to="/" className="brand"><span className="brand-mark"><img src="/everkind-mark.svg" alt="" width="30" height="30" /></span><span className="brand-word">everkind</span></Link><span>Good food deserves another chance.</span><span>© 2026 Everkind · Community food sharing</span><nav className="footer-links" aria-label="Footer"><Link to="/organizations">Organizations</Link><Link to="/food-safety">Food safety</Link><Link to="/about">About</Link><Link to="/contact">Contact</Link><Link to="/privacy">Privacy</Link><Link to="/terms">Terms</Link><Link to="/assistant">Food companion</Link></nav></footer>}</>;
 }
 
 function FoodImage({src,alt,category,className}:{src:string;alt:string;category:string;className?:string}){
@@ -179,62 +187,56 @@ function FoodImage({src,alt,category,className}:{src:string;alt:string;category:
 }
 
 function EmailConfirmationPage(){
- const navigate=useNavigate();
+ const navigate=useNavigate();const confirmationPromise=useRef<Promise<string>|null>(null);
  const [status,setStatus]=useState<'checking'|'success'|'error'>('checking');
  const [message,setMessage]=useState('Confirming your Everkind account…');
  useEffect(()=>{
   let active=true;
-  const confirm=async()=>{
-   if(!supabase){if(active){setStatus('error');setMessage('Everkind authentication is temporarily unavailable.');}return;}
-   const params=new URLSearchParams(window.location.search);
-   const tokenHash=params.get('token_hash');
-   const type=params.get('type');
-   if(!tokenHash||type!=='email'){if(active){setStatus('error');setMessage('This confirmation link is incomplete. Request a fresh email and try again.');}return;}
-   const {error}=await supabase.auth.verifyOtp({token_hash:tokenHash,type:'email'});
-   if(!active)return;
-   if(error){setStatus('error');setMessage(error.message.toLowerCase().includes('expired')?'This confirmation link has expired or was already used. Please request a new one.':error.message);return;}
-   setStatus('success');setMessage('Your email is confirmed. Welcome to Everkind!');
-   window.setTimeout(()=>navigate('/account',{replace:true}),1400);
+  const complete=async():Promise<string>=>{
+   if(!supabase)throw new Error('Everkind authentication is temporarily unavailable.');
+   const url=new URL(window.location.href),params=url.searchParams,hashParams=new URLSearchParams(url.hash.replace(/^#/,''));
+   const callbackError=params.get('error_description')||hashParams.get('error_description')||params.get('error')||hashParams.get('error');
+   if(callbackError)throw new Error(callbackError.replace(/\+/g,' '));
+   const code=params.get('code'),tokenHash=params.get('token_hash'),type=params.get('type');
+   if(code){const {error}=await supabase.auth.exchangeCodeForSession(code);if(error)throw error;}
+   else if(tokenHash&&(type==='email'||type==='signup')){const {error}=await supabase.auth.verifyOtp({token_hash:tokenHash,type:type as 'email'|'signup'});if(error)throw error;}
+   // The default Supabase ConfirmationURL verifies first and returns session
+   // tokens in the URL fragment; detectSessionInUrl processes that callback.
+   const {data:{session},error:sessionError}=await supabase.auth.getSession();
+   if(sessionError)throw sessionError;
+   if(!session)throw new Error('The link returned without a verified session. Open the newest confirmation email on this device, or request a fresh link.');
+   const {data:{user},error:userError}=await supabase.auth.getUser();
+   if(userError)throw userError;
+   if(!user?.email_confirmed_at)throw new Error('Supabase has not marked this email address as confirmed yet. Please use the newest confirmation email.');
+   return 'Your email is confirmed. Welcome to Everkind!';
   };
-  void confirm();
+  if(!confirmationPromise.current)confirmationPromise.current=complete();
+  confirmationPromise.current.then(successMessage=>{if(active){setStatus('success');setMessage(successMessage);window.setTimeout(()=>navigate('/account',{replace:true}),1200);}})
+   .catch(err=>{if(active){setStatus('error');setMessage(err instanceof Error?err.message:'We could not complete email confirmation. Please request a new link.');}});
   return()=>{active=false;};
  },[navigate]);
- return <main className="page page-content narrow" style={{minHeight:'65vh',display:'grid',placeItems:'center',textAlign:'center'}}>
-  <section style={{maxWidth:520}}>
-   <div className="eyebrow">EVERKIND · ACCOUNT CONFIRMATION</div>
-   <h1>{status==='success'?'You’re all set.':status==='error'?'We couldn’t confirm your email.':'Confirming your email…'}</h1>
-   <p className="page-intro">{message}</p>
-   {status==='success'&&<p>You can now sign in and start sharing good food with your community.</p>}
-   {status==='error'&&<Link className="btn btn-dark" to="/signup">Return to sign up <ArrowRight size={16}/></Link>}
-   {status==='checking'&&<p>Please keep this page open for a moment.</p>}
-  </section>
- </main>;
+ return <main className="page page-content narrow" style={{minHeight:'65vh',display:'grid',placeItems:'center',textAlign:'center'}}><section style={{maxWidth:520}}>
+  <div className="eyebrow">EVERKIND · ACCOUNT CONFIRMATION</div>
+  <h1>{status==='success'?'You’re all set.':status==='error'?'We couldn’t confirm your email.':'Confirming your email…'}</h1><p className="page-intro">{message}</p>
+  {status==='success'&&<p>Your email address is verified. You can now use your Everkind account.</p>}
+  {status==='error'&&<div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}><Link className="btn btn-dark" to="/signin">Go to sign in <ArrowRight size={16}/></Link><Link className="btn btn-outline" to="/signup">Back to sign up</Link></div>}
+  {status==='checking'&&<p>Please keep this page open for a moment.</p>}
+ </section></main>;
 }
-
 function AuthPage({mode,onAuth}:{mode:'signin'|'signup';onAuth:(profile:{name:string;type:string;email:string})=>void}){
- const navigate=useNavigate();const [name,setName]=useState('');const [email,setEmail]=useState('');const [password,setPassword]=useState('');const [type,setType]=useState('Individual');const [error,setError]=useState('');const [busy,setBusy]=useState(false);const [pendingConfirmation,setPendingConfirmation]=useState(false);const signup=mode==='signup';
- const submit=async(e:any)=>{e.preventDefault();setError('');if(!supabase){setError('Everkind authentication is not configured. Please try again later.');return;}if(signup&&!name.trim()){setError('Please enter your name.');return;}if(password.length<8){setError('Use at least 8 characters.');return;}setBusy(true);
+ const navigate=useNavigate();const [name,setName]=useState('');const [email,setEmail]=useState('');const [password,setPassword]=useState('');const [type,setType]=useState('Individual');const [error,setError]=useState('');const [success,setSuccess]=useState('');const [busy,setBusy]=useState(false);const signup=mode==='signup';
+ const submit=async(e:any)=>{e.preventDefault();setError('');setSuccess('');if(!supabase){setError('Everkind authentication is not configured. Please try again later.');return;}if(signup&&!name.trim()){setError('Please enter your name.');return;}if(password.length<8){setError('Use at least 8 characters.');return;}setBusy(true);
   try{const cleanEmail=email.trim().toLowerCase();const result=signup
-   ? await supabase.auth.signUp({email:cleanEmail,password,options:{emailRedirectTo:`${window.location.origin}/auth/confirm`,data:{full_name:name.trim(),preferred_language:'ta',account_type:type==='Organisation'?'organisation':'individual'}}})
+   ? await supabase.auth.signUp({email:cleanEmail,password,options:{emailRedirectTo:authConfirmUrl(),data:{full_name:name.trim(),preferred_language:'ta',account_type:type==='Organisation'?'organisation':'individual'}}})
    : await supabase.auth.signInWithPassword({email:cleanEmail,password});
    if(result.error)throw result.error;
-   if(signup&&!result.data.session){setPendingConfirmation(true);setError('We sent a fresh confirmation email. Open it to finish creating your account.');return;}
+   if(signup&&!result.data.session){setSuccess('Check your inbox for a confirmation link from Everkind. Open it to verify your email and activate your account. If it is missing, check Spam or resend the email below.');return;}
    const profile={name:signup?name.trim():(result.data.user?.user_metadata?.full_name||cleanEmail.split('@')[0]),type,email:cleanEmail};onAuth(profile);navigate('/account');
   }catch(err){setError(err instanceof Error?err.message:'Authentication failed. Please try again.');}finally{setBusy(false);}
  };
- const resendConfirmation=async()=>{
-  if(!supabase||!email.trim())return;
-  setBusy(true);setError('');
-  try{
-   const {error}=await supabase.auth.resend({type:'signup',email:email.trim().toLowerCase(),options:{emailRedirectTo:`${window.location.origin}/auth/confirm`}});
-   if(error)throw error;
-   setError('A new confirmation email has been sent. Check your inbox and spam folder.');
-  }catch(err){setError(err instanceof Error?err.message:'Could not resend the confirmation email. Please wait a moment and try again.');}
-  finally{setBusy(false);}
- };
  return <main className="auth-shell page"><section className="auth-art"><img src="https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1400&q=90" alt="A freshly prepared meal made to be shared"/><div className="auth-art-shade"/><Link to="/" className="auth-art-brand"><span className="brand-mark"><img src="/everkind-mark.svg" alt="" width="30" height="30" /></span><span className="brand-word">everkind</span></Link><div className="auth-art-copy"><span className="auth-kicker">A NEIGHBOURHOOD PANTRY</span><h2>Good food<br/><em>brings us</em><br/>closer.</h2><p>Find your people. Share what you can. Give good food another chance.</p><div className="auth-art-foot"><span>SHARE MORE. WASTE LESS.</span><span>01 / COMMUNITY</span></div></div></section>
  <section className="auth-side"><div className="auth-topline"><span>COMMUNITY, ONE MEAL AT A TIME</span><Link to="/">Back to home <ArrowRight size={14}/></Link></div><div className="auth-card"><div className="eyebrow"><span className="eyebrow-line"/>{signup?'YOUR PLACE AT THE TABLE':'WELCOME BACK'}</div><h1>{signup?<>Make room for <em>good.</em></>:<>Good to have you <em>back.</em></>}</h1><p className="auth-intro">{signup?'Create your Everkind profile and join a neighbourhood sharing something better.':'Sign in to keep your saved food, requests and community activity together.'}</p>
- <form className="auth-form" onSubmit={submit}>{signup&&<label>Your name<div className="auth-input"><UserRound size={17}/><input value={name} onChange={e=>setName(e.target.value)} placeholder="How should we call you?" autoComplete="name" required/></div></label>}<label>Email address<div className="auth-input"><Mail size={17}/><input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" required/></div></label><label>Password<div className="auth-input"><LockKeyhole size={17}/><input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="At least 8 characters" autoComplete={signup?'new-password':'current-password'} minLength={8} required/></div></label>{signup&&<label>I’m joining as<select className="auth-role" value={type} onChange={e=>setType(e.target.value)}><option>Individual</option><option>Organisation</option></select></label>}{error&&<p className="auth-error" role="alert">{error}</p>}{pendingConfirmation&&signup&&<button type="button" className="text-link" onClick={()=>void resendConfirmation()} disabled={busy}>{busy?'Sending…':'Resend confirmation email'}</button>}<button className="btn btn-dark full-btn auth-submit" type="submit" disabled={busy}>{busy?'Please wait…':signup?'Create account':'Sign in'} <ArrowRight size={16}/></button></form><div className="auth-switch">{signup?'Already part of Everkind?':'New to Everkind?'} <Link to={signup?'/signin':'/signup'}>{signup?'Sign in':'Create an account'} <ArrowRight size={14}/></Link></div><p className="auth-disclaimer">Your account is secured by Supabase Auth. Everkind never stores your password in the app.</p></div><div className="auth-side-foot"><span>GOOD FOOD DESERVES ANOTHER CHANCE.</span><span>Everkind © 2026</span></div></section></main>;
+ <form className="auth-form" onSubmit={submit}>{signup&&<label>Your name<div className="auth-input"><UserRound size={17}/><input value={name} onChange={e=>setName(e.target.value)} placeholder="How should we call you?" autoComplete="name" required/></div></label>}<label>Email address<div className="auth-input"><Mail size={17}/><input type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@example.com" autoComplete="email" required/></div></label><label>Password<div className="auth-input"><LockKeyhole size={17}/><input type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="At least 8 characters" autoComplete={signup?'new-password':'current-password'} minLength={8} required/></div></label>{signup&&<label>I’m joining as<select className="auth-role" value={type} onChange={e=>setType(e.target.value)}><option>Individual</option><option>Organisation</option></select></label>}{error&&<p className="auth-error" role="alert">{error}</p>}{success&&<div className="auth-success" role="status"><p>{success}</p><button type="button" className="btn btn-outline" disabled={busy||!email.trim()} onClick={async()=>{setError('');setBusy(true);try{const {error}=await supabase!.auth.resend({type:'signup',email:email.trim().toLowerCase(),options:{emailRedirectTo:authConfirmUrl()}});if(error)throw error;setSuccess('A fresh confirmation email has been requested. Check your inbox and Spam folder.');}catch(err){setError(err instanceof Error?err.message:'Could not resend the confirmation email. Please wait before trying again.');}finally{setBusy(false);}}}>Resend confirmation email</button></div>}<button className="btn btn-dark full-btn auth-submit" type="submit" disabled={busy}>{busy?'Please wait…':signup?'Create account':'Sign in'} <ArrowRight size={16}/></button></form><div className="auth-switch">{signup?'Already part of Everkind?':'New to Everkind?'} <Link to={signup?'/signin':'/signup'}>{signup?'Sign in':'Create an account'} <ArrowRight size={14}/></Link></div><p className="auth-disclaimer">Your account is secured by Supabase Auth. Everkind never stores your password in the app.</p></div><div className="auth-side-foot"><span>GOOD FOOD DESERVES ANOTHER CHANCE.</span><span>Everkind © 2026</span></div></section></main>;
 }
 function LocationPicker({location,setLocation,gps,foods}:{location:string;setLocation:(s:string)=>void;gps:()=>void;foods:Food[]}){
  const options=Array.from(new Set(foods.flatMap(f=>[f.area,f.city,f.area+', '+f.city]))).sort();
@@ -285,11 +287,7 @@ function ShowcaseSection({data}:{data:ShowcaseData}){
     </div>
     <p className="showcase-footnote">Pins use sample listing coordinates. This is a visual demo map, not live navigation or distance routing.</p>
    </section>
-   <section className="showcase-panel showcase-activity-panel">
-    <div className="showcase-panel-head"><div><span className="showcase-kicker">02 / COMMUNITY PULSE</span><h3>Recent demo activity</h3></div><span className="showcase-mini-tag">SIMULATED</span></div>
-    <div className="showcase-activity-list">{data.activities.map(event=><article className="showcase-activity" key={event.id}><span className="showcase-activity-dot"/><div><div className="showcase-activity-meta"><strong>{event.actor_name}</strong><span>{actionLabel[event.action_type]||'DEMO EVENT'}</span></div><p>{event.action_type==='shared'?'shared':event.action_type==='requested'?'sample-requested':event.action_type==='matched'?'matched':'simulated pickup'} <b>{event.quantity} {event.unit}</b> · {event.item_label}</p><small>{event.area} · {new Date(event.happened_at).toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})}</small></div></article>)}</div>
-    <p className="showcase-footnote">These sample events are stored separately from real reservation and collection records.</p>
-   </section>
+
   </div>
   <div className="showcase-community">
    <div className="showcase-community-column"><div className="showcase-panel-head"><div><span className="showcase-kicker">03 / FOOD DONORS</span><h3>People sharing surplus</h3></div><span className="showcase-mini-tag">SAMPLE PROFILES</span></div>
@@ -299,13 +297,13 @@ function ShowcaseSection({data}:{data:ShowcaseData}){
     <div className="showcase-org-list">{data.recipients.slice(0,5).map(org=><article className="showcase-org" key={org.id}><span className="showcase-org-mark recipient"><Heart size={16}/></span><div><strong>{org.display_name}</strong><small>{org.category} · {org.area}</small></div></article>)}</div>
    </div>
   </div>
-  <div className="showcase-disclaimer">All names, profiles, map pins and activity shown here are illustrative demo data—not verified partners, real requests, or recorded impact.</div>
+  <div className="showcase-disclaimer">All names, profiles and map pins shown here are illustrative demo data—not verified partners or real requests.</div>
  </section>;
 }
-function Home({language,foods,all,query,setQuery,category,setCategory,toggleSave,saved,gps,location,setLocation,showcase}:any){
- return <main><section className="hero page"><div className="hero-copy"><div className="eyebrow"><span className="eyebrow-line"/> A LITTLE LESS WASTE. A LOT MORE GOOD.</div><h1>{language==='ta'?<>நல்ல உணவுக்கு<br/><em>இன்னொரு வாய்ப்பு.</em></>:language==='te'?<>మంచి ఆహారానికి<br/><em>మరో అవకాశం.</em></>:<>Good food deserves<br/><em>another chance.</em></>}</h1><p className="hero-description">{language==='ta'?'உங்கள் பகுதியில் பகிரப்படும் கூடுதல் உணவைக் கண்டறியுங்கள். உணவு வீணாகாமல் பெறுங்கள்.':language==='te'?'మీ పరిసరాల్లో పంచుకునే అదనపు ఆహారాన్ని కనుగొనండి. ఆహారం వృథా కాకుండా పొందండి.':'Discover surplus food shared by people and places around your neighbourhood. Rescue something lovely before it goes to waste.'}</p><div className="hero-actions"><Link to="/explore" className="btn btn-dark">{language==='ta'?'அருகில் உணவு தேடு':language==='te'?'దగ్గరలో ఆహారం వెతుకు':'Find food nearby'} <ArrowRight size={17}/></Link><Link to="/donate" className="text-link">{language==='ta'?'என்னிடம் பகிர உணவு உள்ளது':language==='te'?'నా దగ్గర పంచుకునే ఆహారం ఉంది':'I have food to share'} <ArrowRight size={15}/></Link><Link to="/organizations" className="text-link">{language==='ta'?'நாங்கள் ஒரு அமைப்பு':language==='te'?'మేము ఒక సంస్థ':'Join as an organisation'} <ArrowRight size={15}/></Link></div><div className="hero-note"><span className="note-icon"><Heart size={15}/></span> A neighbourhood effort, one good meal at a time.</div></div><div className="hero-visual"><img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1200&q=90" alt="A colourful table of fresh vegetables and wholesome food"/><div className="image-caption"><span>GOOD FOOD, SHARED WELL</span><span>01 / COMMUNITY</span></div><div className="hero-stamp"><Sprout size={23}/><span>Share<br/>the good.</span></div></div></section>
+function Home({language,authenticated,foods,all,query,setQuery,category,setCategory,toggleSave,saved,gps,location,setLocation,showcase}:any){
+ return <main><section className="hero page"><div className="hero-copy"><div className="eyebrow"><span className="eyebrow-line"/> A LITTLE LESS WASTE. A LOT MORE GOOD.</div><h1>{language==='ta'?<>நல்ல உணவுக்கு<br/><em>இன்னொரு வாய்ப்பு.</em></>:language==='te'?<>మంచి ఆహారానికి<br/><em>మరో అవకాశం.</em></>:<>Good food deserves<br/><em>another chance.</em></>}</h1><p className="hero-description">{language==='ta'?'உங்கள் பகுதியில் பகிரப்படும் கூடுதல் உணவைக் கண்டறியுங்கள். உணவு வீணாகாமல் பெறுங்கள்.':language==='te'?'మీ పరిసరాల్లో పంచుకునే అదనపు ఆహారాన్ని కనుగొనండి. ఆహారం వృథా కాకుండా పొందండి.':'Discover surplus food shared by people and places around your neighbourhood. Rescue something lovely before it goes to waste.'}</p><div className="hero-actions"><Link to="/explore" className="btn btn-dark">{language==='ta'?'அருகில் உணவு தேடு':language==='te'?'దగ్గరలో ఆహారం వెతుకు':'Find food nearby'} <ArrowRight size={17}/></Link><Link to="/donate" className="text-link">{language==='ta'?'என்னிடம் பகிர உணவு உள்ளது':language==='te'?'నా దగ్గర పంచుకునే ఆహారం ఉంది':'I have food to share'} <ArrowRight size={15}/></Link><Link to="/organizations" className="text-link">{language==='ta'?'நாங்கள் ஒரு அமைப்பு':language==='te'?'మేము ఒక సంస్థ':'Join as an organisation'} <ArrowRight size={15}/></Link>{!authenticated&&<Link to="/signin" className="btn btn-outline hero-signin">{language==='ta'?'உள்நுழை':language==='te'?'లాగిన్':'Sign in'} <ArrowRight size={16}/></Link>}</div><div className="hero-note"><span className="note-icon"><Heart size={15}/></span> A neighbourhood effort, one good meal at a time.</div></div><div className="hero-visual"><img src="https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&w=1200&q=90" alt="A colourful table of fresh vegetables and wholesome food"/><div className="image-caption"><span>GOOD FOOD, SHARED WELL</span><span>01 / COMMUNITY</span></div><div className="hero-stamp"><Sprout size={23}/><span>Share<br/>the good.</span></div></div></section>
  <section className="discovery page"><div className="section-heading"><div><div className="eyebrow"><span className="eyebrow-line"/> THE GOOD STUFF, CLOSE BY</div><h2>Available near you<span className="green-period">.</span></h2><p>Find something worth rescuing in your corner of the city.</p></div><Link to="/explore" className="text-link desktop-link">Explore all food <ArrowRight size={16}/></Link></div>
- <div className="discovery-tools"><div className="searchbox"><Search size={18}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search food, category or donor…"/><kbd>⌕</kbd></div><LocationPicker location={location} setLocation={setLocation} gps={gps} foods={all}/></div>
+ <div className="discovery-tools"><div className="searchbox"><Search size={18}/><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search food, category or donor…"/></div><LocationPicker location={location} setLocation={setLocation} gps={gps} foods={all}/></div>
  <CategoryBar category={category} setCategory={setCategory}/><div className="food-grid">{foods.slice(0,4).map((f:Food)=><FoodCard key={f.id} food={f} saved={saved.includes(f.id)} toggleSave={toggleSave}/>)}</div>{foods.length===0&&<Empty title="Nothing on the table just yet" body="Try another category or search. New surplus food can appear at any time."/>}<div className="mobile-see-all"><Link to="/explore" className="btn btn-outline">See all available food <ArrowRight size={16}/></Link></div></section>
  <section className="share-strip page" id="how"><div className="share-mark"><Sprout size={28}/></div><div><div className="eyebrow">GOOD FOOD SHOULD GO SOMEWHERE GOOD</div><h2>Have a little extra?<br/><em>Pass it on.</em></h2><p>From a few garden tomatoes to a tray of untouched meals, your surplus can make someone's day.</p><Link to="/donate" className="btn btn-light">Share surplus food <ArrowRight size={16}/></Link></div><div className="share-image"><img src="https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=1000&q=85" alt="Freshly prepared shared food"/></div></section>
  <ShowcaseSection data={showcase}/><How compact/></main>;
