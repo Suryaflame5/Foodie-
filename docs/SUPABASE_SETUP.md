@@ -58,7 +58,9 @@ Do not reapply already-recorded migrations manually.
 - Donor inbox and listing management.
 - Companion conversation and message persistence.
 
-The database is currently empty. There are no existing profiles, listings or requests in the project yet; new records will be created when users sign up and publish food.
+## Showcase data
+
+The shared project currently contains 18 illustrative Chennai food listings, all marked `food_listings.is_demo = true`. They exist to make the discovery experience explorable during a hackathon demo. The discovery RPC includes these unowned demo rows while continuing to require available status, positive remaining quantity and a future pickup deadline. Demo cards are labelled in the UI and reservation is disabled for them. No fake Auth users, donor profiles, requests, reservations, collections, or impact totals are inserted. Run `supabase/seed_demo_showcase.sql` to refresh the showcase inventory; it is idempotent and resets only the stable demo listing IDs.
 
 ## AI companion setup — one required secret
 
