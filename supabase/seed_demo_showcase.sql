@@ -45,3 +45,33 @@ on conflict(id) do update set
   storage_notes=excluded.storage_notes,status='available',safety_confirmed=true,
   donor_type=excluded.donor_type,latitude=excluded.latitude,longitude=excluded.longitude,
   donor_name=excluded.donor_name,portions=excluded.portions,is_demo=true,updated_at=now();
+
+
+-- Fictional donor and recipient cards, stored separately from Auth profiles.
+insert into public.demo_showcase_organizations(id,display_name,organization_type,category,area,city,description,is_demo) values
+('10111111-1111-4111-8111-111111111111','The Flour House Bakery','donor','Bakery','Alwarpet','Chennai','Fictional bakery profile for surplus bread sharing.',true),
+('10222222-2222-4222-8222-222222222222','Green Basket Market','donor','Produce market','T. Nagar','Chennai','Fictional market profile for seasonal produce listings.',true),
+('10333333-3333-4333-8333-333333333333','Annapoorna Community Kitchen','donor','Community kitchen','Mylapore','Chennai','Sample kitchen profile sharing freshly prepared portions.',true),
+('10444444-4444-4444-8444-444444444444','Sunday Harvest Co-op','donor','Food cooperative','Adyar','Chennai','Fictional neighbourhood co-op sharing extra fruit.',true),
+('10555555-5555-4555-8555-555555555555','Crumb & Co. Patisserie','donor','Bakery','Besant Nagar','Chennai','Sample bakery profile for pastry listings.',true),
+('10666666-6666-4666-8666-666666666666','Little Patch Urban Garden','donor','Community garden','Thiruvanmiyur','Chennai','Fictional urban garden sharing extra greens.',true),
+('10777777-7777-4777-8777-777777777777','Morning Table Kitchen','donor','Community kitchen','Anna Nagar','Chennai','Sample breakfast kitchen profile.',true),
+('10888888-8888-4888-8888-888888888888','Yellow Basket Produce','donor','Produce shop','Kodambakkam','Chennai','Fictional produce shop profile.',true),
+('10999999-9999-4999-8999-999999999999','Nila Home Kitchen','donor','Home kitchen','Velachery','Chennai','Sample home kitchen profile for meal sharing.',true),
+('10aaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa','Green Corner Grocers','donor','Grocery store','Nungambakkam','Chennai','Fictional neighbourhood grocer profile.',true),
+('20111111-1111-4111-8111-111111111111','Mylapore Neighbourhood Pantry','recipient','Community pantry','Mylapore','Chennai','Sample community pantry coordinating local food access.',true),
+('20222222-2222-4222-8222-222222222222','Anbu Community Kitchen','recipient','Community kitchen','Triplicane','Chennai','Fictional recipient kitchen for the demo flow.',true),
+('20333333-3333-4333-8333-333333333333','Little Steps Childcare Centre','recipient','Childcare centre','Anna Nagar','Chennai','Sample organisation coordinating family food support.',true),
+('20444444-4444-4444-8444-444444444444','Hope Circle Shelter','recipient','Community shelter','Saidapet','Chennai','Fictional shelter profile for the showcase.',true),
+('20555555-5555-4555-8555-555555555555','Velachery Community Fridge','recipient','Community fridge','Velachery','Chennai','Sample neighbourhood fridge profile.',true),
+('20666666-6666-4666-8666-666666666666','Adyar Senior Support Kitchen','recipient','Senior support kitchen','Adyar','Chennai','Fictional community kitchen profile.',true)
+on conflict(id) do update set display_name=excluded.display_name,organization_type=excluded.organization_type,category=excluded.category,area=excluded.area,city=excluded.city,description=excluded.description,is_demo=true;
+
+-- Simulated activity is intentionally separate from public.food_requests.
+insert into public.demo_showcase_activity(id,actor_name,actor_type,action_type,item_label,area,city,quantity,unit,description,happened_at,is_demo) values
+('30111111-1111-4111-8111-111111111111','Morning Table Kitchen','donor','shared','Idli & sambar breakfast packs','Anna Nagar','Chennai',20,'portions','Illustrative listing created in the demo environment.',now()-interval '18 minutes',true),
+('30222222-2222-4222-8222-222222222222','Green Basket Market','donor','shared','Seasonal vegetable boxes','T. Nagar','Chennai',12,'boxes','Illustrative surplus produce listing.',now()-interval '42 minutes',true),
+('30333333-3333-4333-8333-333333333333','Mylapore Neighbourhood Pantry','recipient','requested','Freshly baked sourdough loaves','Mylapore','Chennai',4,'loaves','Simulated request event; no food request was created.',now()-interval '75 minutes',true),
+('30444444-4444-4444-8444-444444444444','Anbu Community Kitchen','recipient','matched','Homestyle lemon rice meals','Triplicane','Chennai',8,'portions','Illustrative match event for the product walkthrough.',now()-interval '2 hours',true),
+('30555555-5555-4555-8555-555555555555','Hope Circle Shelter','recipient','collected','Farm-fresh fruit selection','Saidapet','Chennai',3,'bags','Simulated collection event; no real collection was recorded.',now()-interval '3 hours',true)
+on conflict(id) do update set actor_name=excluded.actor_name,actor_type=excluded.actor_type,action_type=excluded.action_type,item_label=excluded.item_label,area=excluded.area,city=excluded.city,quantity=excluded.quantity,unit=excluded.unit,description=excluded.description,happened_at=excluded.happened_at,is_demo=true;
