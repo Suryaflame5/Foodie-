@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { isSupabaseConfigured, supabase } from './lib/supabase';
 import FoodCompanion from './FoodCompanion';
@@ -20,6 +20,7 @@ const read = <T,>(key:string,fallback:T):T => { try { const v=localStorage.getIt
 const write = (key:string,value:unknown) => localStorage.setItem(key,JSON.stringify(value));
 const categories = ['All food','Prepared meals','Vegetables','Bakery','Fruit','Packaged food'];
 const moneyless = (n:number,u:string) => `${n} ${u} available`;
+const AUTH_CONFIRM_URL = 'https://everkindhub.netlify.app/auth/confirm';
 
 function Header({location,user,language,onLanguage}:{location:string;user:{name:string};language:'en'|'ta'|'te';onLanguage:(v:'en'|'ta'|'te')=>void}) {
  const [open,setOpen]=useState(false);
@@ -185,45 +186,49 @@ function FoodImage({src,alt,category,className}:{src:string;alt:string;category:
 }
 
 function EmailConfirmationPage(){
- const navigate=useNavigate();
+ const navigate=useNavigate();const started=useRef(false);
  const [status,setStatus]=useState<'checking'|'success'|'error'>('checking');
  const [message,setMessage]=useState('Confirming your Everkind account…');
  useEffect(()=>{
-  let active=true;
+  if(started.current)return;started.current=true;let active=true;
   const confirm=async()=>{
    if(!supabase){if(active){setStatus('error');setMessage('Everkind authentication is temporarily unavailable.');}return;}
-   const params=new URLSearchParams(window.location.search);
-   const tokenHash=params.get('token_hash');
-   const type=params.get('type');
-   if(!tokenHash||type!=='email'){if(active){setStatus('error');setMessage('This confirmation link is incomplete. Request a fresh email and try again.');}return;}
-   const {error}=await supabase.auth.verifyOtp({token_hash:tokenHash,type:'email'});
-   if(!active)return;
-   if(error){setStatus('error');setMessage(error.message.toLowerCase().includes('expired')?'This confirmation link has expired or was already used. Please request a new one.':error.message);return;}
-   setStatus('success');setMessage('Your email is confirmed. Welcome to Everkind!');
-   window.setTimeout(()=>navigate('/account',{replace:true}),1400);
+   const url=new URL(window.location.href),params=url.searchParams,hashParams=new URLSearchParams(url.hash.replace(/^#/,''));
+   const callbackError=params.get('error_description')||hashParams.get('error_description')||params.get('error')||hashParams.get('error');
+   if(callbackError){if(active){setStatus('error');setMessage(callbackError.replace(/\+/g,' '));}return;}
+   let confirmationError:Error|null=null;
+   const code=params.get('code'),tokenHash=params.get('token_hash'),type=params.get('type');
+   if(code){const {error}=await supabase.auth.exchangeCodeForSession(code);if(error)confirmationError=error;}
+   else if(tokenHash&&(type==='email'||type==='signup')){const {error}=await supabase.auth.verifyOtp({token_hash:tokenHash,type:type as 'email'|'signup'});if(error)confirmationError=error;}
+   if(confirmationError){if(active){setStatus('error');setMessage(confirmationError.message.toLowerCase().includes('expired')||confirmationError.message.toLowerCase().includes('invalid')?'This confirmation link has expired, was already used, or could not be verified. Request a fresh confirmation email.':confirmationError.message);}return;}
+   // Default Supabase ConfirmationURL verifies first and returns session tokens
+   // in the URL fragment; detectSessionInUrl processes that callback on the client.
+   const {data:{session},error:sessionError}=await supabase.auth.getSession();
+   if(sessionError){if(active){setStatus('error');setMessage(sessionError.message);}return;}
+   if(!session){if(active){setStatus('error');setMessage('The link returned without a verified session. Open the newest confirmation email on this device, or request a fresh link.');}return;}
+   const {data:{user},error:userError}=await supabase.auth.getUser();
+   if(userError||!user?.email_confirmed_at){if(active){setStatus('error');setMessage(userError?.message||'Supabase has not marked this email address as confirmed yet. Please use the newest confirmation email.');}return;}
+   if(!active)return;setStatus('success');setMessage('Your email is confirmed. Welcome to Everkind!');
+   window.setTimeout(()=>navigate('/account',{replace:true}),1200);
   };
-  void confirm();
+  void confirm().catch(err=>{if(active){setStatus('error');setMessage(err instanceof Error?err.message:'We could not complete email confirmation. Please request a new link.');}});
   return()=>{active=false;};
  },[navigate]);
- return <main className="page page-content narrow" style={{minHeight:'65vh',display:'grid',placeItems:'center',textAlign:'center'}}>
-  <section style={{maxWidth:520}}>
-   <div className="eyebrow">EVERKIND · ACCOUNT CONFIRMATION</div>
-   <h1>{status==='success'?'You’re all set.':status==='error'?'We couldn’t confirm your email.':'Confirming your email…'}</h1>
-   <p className="page-intro">{message}</p>
-   {status==='success'&&<p>You can now sign in and start sharing good food with your community.</p>}
-   {status==='error'&&<Link className="btn btn-dark" to="/signup">Return to sign up <ArrowRight size={16}/></Link>}
-   {status==='checking'&&<p>Please keep this page open for a moment.</p>}
-  </section>
- </main>;
+ return <main className="page page-content narrow" style={{minHeight:'65vh',display:'grid',placeItems:'center',textAlign:'center'}}><section style={{maxWidth:520}}>
+  <div className="eyebrow">EVERKIND · ACCOUNT CONFIRMATION</div>
+  <h1>{status==='success'?'You’re all set.':status==='error'?'We couldn’t confirm your email.':'Confirming your email…'}</h1><p className="page-intro">{message}</p>
+  {status==='success'&&<p>Your email address is verified. You can now use your Everkind account.</p>}
+  {status==='error'&&<div style={{display:'flex',gap:12,justifyContent:'center',flexWrap:'wrap'}}><Link className="btn btn-dark" to="/signin">Go to sign in <ArrowRight size={16}/></Link><Link className="btn btn-outline" to="/signup">Back to sign up</Link></div>}
+  {status==='checking'&&<p>Please keep this page open for a moment.</p>}
+ </section></main>;
 }
-
 function AuthPage({mode,onAuth}:{mode:'signin'|'signup';onAuth:(profile:{name:string;type:string;email:string})=>void}){
  const navigate=useNavigate();const [name,setName]=useState('');const [email,setEmail]=useState('');const [password,setPassword]=useState('');const [type,setType]=useState('Individual');const [error,setError]=useState('');const [busy,setBusy]=useState(false);const [pendingConfirmation,setPendingConfirmation]=useState(false);const signup=mode==='signup';
  const submit=async(e:any)=>{e.preventDefault();setError('');if(!supabase){setError('Everkind authentication is not configured. Please try again later.');return;}if(signup&&!name.trim()){setError('Please enter your name.');return;}if(password.length<8){setError('Use at least 8 characters.');return;}setBusy(true);
   try{const cleanEmail=email.trim().toLowerCase();const result=signup
-   ? await supabase.auth.signUp({email:cleanEmail,password,options:{emailRedirectTo:`${window.location.origin}/auth/confirm`,data:{full_name:name.trim(),preferred_language:'ta',account_type:type==='Organisation'?'organisation':'individual'}}})
+   ? await supabase.auth.signUp({email:cleanEmail,password,options:{emailRedirectTo:AUTH_CONFIRM_URL,data:{full_name:name.trim(),preferred_language:'ta',account_type:type==='Organisation'?'organisation':'individual'}}})
    : await supabase.auth.signInWithPassword({email:cleanEmail,password});
-   if(result.error)throw result.error;
+   if(result.error){const authError=result.error as Error&{status?:number;code?:string};if(signup&&(authError.code==='over_email_send_rate_limit'||authError.status===429||authError.message.toLowerCase().includes('email rate limit'))){setError('Supabase’s built-in email sender has reached its project-wide limit (2 emails per hour). No confirmation email was sent. Please wait for the limit to reset, then try this same email again. To accept signups reliably, the project needs an SMTP email provider.');return;}throw result.error;}
    if(signup&&!result.data.session){setPendingConfirmation(true);setError('We sent a fresh confirmation email. Open it to finish creating your account.');return;}
    const profile={name:signup?name.trim():(result.data.user?.user_metadata?.full_name||cleanEmail.split('@')[0]),type,email:cleanEmail};onAuth(profile);navigate('/account');
   }catch(err){setError(err instanceof Error?err.message:'Authentication failed. Please try again.');}finally{setBusy(false);}
@@ -232,8 +237,8 @@ function AuthPage({mode,onAuth}:{mode:'signin'|'signup';onAuth:(profile:{name:st
   if(!supabase||!email.trim())return;
   setBusy(true);setError('');
   try{
-   const {error}=await supabase.auth.resend({type:'signup',email:email.trim().toLowerCase(),options:{emailRedirectTo:`${window.location.origin}/auth/confirm`}});
-   if(error)throw error;
+   const {error}=await supabase.auth.resend({type:'signup',email:email.trim().toLowerCase(),options:{emailRedirectTo:AUTH_CONFIRM_URL}});
+   if(error){const authError=error as Error&{status?:number;code?:string};if(authError.code==='over_email_send_rate_limit'||authError.status===429||authError.message.toLowerCase().includes('email rate limit'))throw new Error('Email sending is temporarily rate-limited by Supabase (2 emails per hour project-wide). Wait for the limit to reset; repeated resend attempts will not help.');throw error;}
    setError('A new confirmation email has been sent. Check your inbox and spam folder.');
   }catch(err){setError(err instanceof Error?err.message:'Could not resend the confirmation email. Please wait a moment and try again.');}
   finally{setBusy(false);}
