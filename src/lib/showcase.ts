@@ -28,6 +28,9 @@ export type ShowcaseLocation = {
   area: string;
   latitude: number;
   longitude: number;
+  category: string;
+  quantity: number;
+  unit: string;
 };
 
 export type ShowcaseData = {
@@ -55,7 +58,7 @@ export async function loadShowcaseData(city = 'Chennai'): Promise<ShowcaseData> 
       .select('id,actor_name,actor_type,action_type,item_label,area,quantity,unit,description,happened_at')
       .eq('city', city).eq('is_demo', true).order('happened_at', { ascending: false }).limit(5),
     supabase.from('food_listings')
-      .select('id,title,area,latitude,longitude')
+      .select('id,title,area,latitude,longitude,category,quantity,unit')
       .eq('city', city).eq('is_demo', true).eq('status', 'available')
       .not('latitude', 'is', null).not('longitude', 'is', null)
       .order('pickup_deadline', { ascending: true })
