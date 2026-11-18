@@ -15,7 +15,7 @@ Everkind is a community surplus-food discovery and sharing platform. It helps ne
 - Tamil/Telugu/English voice-first food companion UI, backed by a JWT-verified Supabase Edge Function.
 - Netlify production hosting with a separate GitHub review branch for this implementation.
 
-The Supabase project `njuxgtacizzgwqymtcbc` is healthy. The latest audit found 6 food listings, 0 profiles and 0 requests in the inspected tables; do not treat seeded or unowned records as verified community offers.
+The Supabase project `njuxgtacizzgwqymtcbc` is healthy. Its Chennai showcase contains 18 demo food listings, 10 fictional donor cards, 6 fictional recipient cards and 5 simulated activity events. Every record is explicitly tagged as demo data; these are not verified community offers or real-world impact.
 
 ## Local setup
 
@@ -50,4 +50,4 @@ The current production site is hosted on Netlify at `https://everkindhub.netlify
 
 Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in the Netlify environment for the intended deploy contexts. Never add service-role or AI provider credentials to browser-exposed `VITE_` variables.
 
-See [the Supabase setup and launch checklist](docs/SUPABASE_SETUP.md).
+For the repeatable showcase dataset, review `supabase/seed_demo_showcase.sql`. Demo reservations are disabled, and simulated activity is stored outside the real reservation tables. Exclude all showcase records from real impact reporting. See [the Supabase setup and launch checklist](docs/SUPABASE_SETUP.md).

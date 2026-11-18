@@ -11,7 +11,7 @@ const client = () => {
   return supabase;
 };
 const deadlineLabel = (value: string) => new Date(value).toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
-const publicImage = (path: string | null) => path ? client().storage.from('food-images').getPublicUrl(path).data.publicUrl : '';
+const publicImage = (path: string | null) => path ? (path.startsWith('http://') || path.startsWith('https://') ? path : client().storage.from('food-images').getPublicUrl(path).data.publicUrl) : '';
 const mapListing = (row: any): FoodRecord => ({
   id: row.id, title: row.title, category: row.category, donor: row.donor_name || row.donor || 'Community donor',
   donorType: row.donor_type === 'organisation' ? 'Organisation' : row.donor_type === 'member' ? 'Individual' : row.donor_type || 'Community member', qty: Math.max(0,Number(row.available_quantity ?? (Number(row.quantity||0)-Number(row.reserved_quantity||0)-Number(row.collected_quantity||0)))),
@@ -19,7 +19,7 @@ const mapListing = (row: any): FoodRecord => ({
   time: row.pickup_instructions || 'Coordinate collection with the donor', area: row.area, city: row.city,
   image: row.image_url || publicImage(row.image_path), imagePath: row.image_path || undefined,
   description: row.description || '', storage: row.storage_notes || '', diet: (row.dietary_tags || []).join(' · ') || 'Not specified',
-  allergens: row.allergen_info || [], preparedAt: row.food_prepared_at || null, status: row.status, sample: false
+  allergens: row.allergen_info || [], preparedAt: row.food_prepared_at || null, status: row.status, sample: Boolean(row.is_demo)
 });
 export async function discoverFood(location: string, query = '', cursor?: { deadline: string; id: string }): Promise<FoodRecord[]> {
   const parts=location.split(',').map(x=>x.trim()).filter(Boolean);
