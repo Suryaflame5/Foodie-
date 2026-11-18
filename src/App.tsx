@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, NavLink, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
+import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom';
 import { isSupabaseConfigured, supabase } from './lib/supabase';
 import FoodCompanion from './FoodCompanion';
 import { AboutPage, AssistantPage, ContactPage, FoodSafetyPage, OrganizationsPage, PrivacyPage, TermsPage } from './PublicPages';
@@ -50,9 +50,12 @@ function App(){
  const [category,setCategory]=useState('All food');
  const [toast,setToast]=useState('');
  const [loadingFoods,setLoadingFoods]=useState(true);
+ const [authReady,setAuthReady]=useState(false);
+ const [authenticated,setAuthenticated]=useState(false);
  const [showcase,setShowcase]=useState<ShowcaseData>(emptyShowcase);
  const route=useLocation();
  const isAuthRoute=route.pathname==='/signin'||route.pathname==='/signup';
+ const isPublicAuthRoute=isAuthRoute||route.pathname==='/auth/confirm';
  const notify=(message:string)=>{setToast(message);window.setTimeout(()=>setToast(''),3200);};
  const chooseLocation=(value:string)=>{setLocation(value);localStorage.setItem('foodie-location',value);};
  const refreshFoods=async()=>{try{const data=await discoverFood(location,query);setFoods(data as Food[]);setHasMoreFoods(data.length===20);}catch(e){notify(e instanceof Error?e.message:'Could not load food listings.');}finally{setLoadingFoods(false);}};
@@ -79,13 +82,14 @@ function App(){
  };
  useEffect(()=>{let active=true;loadShowcaseData().then(data=>{if(active)setShowcase(data);}).catch(()=>{});return()=>{active=false;};},[]);
  useEffect(()=>{
-  if(!supabase){setUser({name:'Guest',type:'Individual',language:(localStorage.getItem('foodie-language') as 'en'|'ta'|'te')||'ta'});setLoadingFoods(false);return;}
+  if(!supabase){setUser({name:'Guest',type:'Individual',language:(localStorage.getItem('foodie-language') as 'en'|'ta'|'te')||'ta'});setAuthenticated(false);setAuthReady(true);setLoadingFoods(false);return;}
   let alive=true;
   const load=async(session:any)=>{
-   if(!session?.user){if(alive){setUser({name:'Guest',type:'Individual',language:'ta'});setSaved([]);setRequests([]);setMyDonations([]);}return;}
+   if(!session?.user){if(alive){setAuthenticated(false);setAuthReady(true);setUser({name:'Guest',type:'Individual',language:'ta'});setSaved([]);setRequests([]);setIncomingRequests([]);setMyDonations([]);}return;}
+   if(alive){setAuthenticated(true);setAuthReady(true);}
    const {data,error}=await supabase!.from('profiles').select('full_name,role,preferred_language').eq('id',session.user.id).maybeSingle();
    if(!alive)return;
-   if(error){notify('Your account profile could not be loaded.');return;}
+   if(error){setUser({name:session.user.user_metadata?.full_name||session.user.email?.split('@')[0]||'Member',type:'Individual',email:session.user.email,language:'ta'});notify('Your account profile could not be loaded.');return;}
    const role=data?.role;
    setUser({name:data?.full_name||session.user.user_metadata?.full_name||session.user.email?.split('@')[0]||'Member',type:role==='organisation'?'Organisation':'Individual',email:session.user.email,language:(data?.preferred_language||'ta') as 'en'|'ta'|'te'});
    void refreshMemberData();
@@ -95,6 +99,7 @@ function App(){
   return()=>{alive=false;subscription.unsubscribe();};
  },[]);
  useEffect(()=>{
+  if(!authReady||!authenticated){setLoadingFoods(false);setFoods([]);return;}
   let active=true;
   const timer=window.setTimeout(async()=>{
    setLoadingFoods(true);
@@ -108,7 +113,7 @@ function App(){
    }
   },query.trim()?300:0);
   return()=>{active=false;window.clearTimeout(timer);};
- },[location,query]);
+ },[location,query,authReady,authenticated]);
  const toggleSave=async(id:string)=>{
   const wasSaved=saved.includes(id);
   if(!supabase){notify('Food saving is unavailable until the backend is configured.');return;}
@@ -143,7 +148,7 @@ function App(){
  };
  const filtered=useMemo(()=>foods.filter(f=>(category==='All food'||f.category===category)&&f.qty>0),[foods,category]);
  const completeAuth=(profile:{name:string;type:string;email:string})=>{setUser({...profile,language:'ta'});notify('Welcome to Everkind. Your account is connected.');void refreshMemberData();};
- return <><Header location={location} user={user} language={user.language||'ta'} onLanguage={changeLanguage}/><Routes>
+ return <>{authReady&&authenticated&&!isPublicAuthRoute&&<Header location={location} user={user} language={user.language||'ta'} onLanguage={changeLanguage}/>}{!authReady?<main className="auth-loading" role="status">Checking your session…</main>:!authenticated&&!isPublicAuthRoute?<Navigate to="/signin" replace/>:authenticated&&isAuthRoute?<Navigate to="/account" replace/>:<Routes>
  <Route path="/auth/confirm" element={<EmailConfirmationPage/>}/>
  <Route path="/signin" element={<AuthPage mode="signin" onAuth={completeAuth}/>}/>
  <Route path="/signup" element={<AuthPage mode="signup" onAuth={completeAuth}/>}/>
@@ -164,7 +169,7 @@ function App(){
  <Route path="/terms" element={<TermsPage/>}/>
  <Route path="/assistant" element={<AssistantPage location={location} userName={user.name} preferredLanguage={user.language||'ta'}/>}/>
  <Route path="*" element={<main className="page narrow"><h1>That page wandered off.</h1><Link to="/">Back to food discovery <ArrowRight size={16}/></Link></main>}/>
- </Routes>{toast&&<div className="toast" role="status"><Check size={17}/>{toast}</div>}{loadingFoods&&<span className="sr-only" aria-live="polite">Loading food listings</span>}{route.pathname!=='/assistant'&&<FoodCompanion location={location} userName={user.name} preferredLanguage={user.language||'ta'}/> }<footer className="footer"><Link to="/" className="brand"><span className="brand-mark"><img src="/everkind-mark.svg" alt="" width="30" height="30" /></span><span className="brand-word">everkind</span></Link><span>Good food deserves another chance.</span><span>© 2026 Everkind · Community food sharing</span><nav className="footer-links" aria-label="Footer"><Link to="/organizations">Organizations</Link><Link to="/food-safety">Food safety</Link><Link to="/about">About</Link><Link to="/contact">Contact</Link><Link to="/privacy">Privacy</Link><Link to="/terms">Terms</Link><Link to="/assistant">Food companion</Link></nav></footer></>;
+ </Routes>}{authReady&&authenticated&&toast&&<div className="toast" role="status"><Check size={17}/>{toast}</div>}{authReady&&authenticated&&loadingFoods&&<span className="sr-only" aria-live="polite">Loading food listings</span>}{authReady&&authenticated&&route.pathname!=='/assistant'&&<FoodCompanion location={location} userName={user.name} preferredLanguage={user.language||'ta'}/> }{authReady&&authenticated&&!isPublicAuthRoute&&<footer className="footer"><Link to="/" className="brand"><span className="brand-mark"><img src="/everkind-mark.svg" alt="" width="30" height="30" /></span><span className="brand-word">everkind</span></Link><span>Good food deserves another chance.</span><span>© 2026 Everkind · Community food sharing</span><nav className="footer-links" aria-label="Footer"><Link to="/organizations">Organizations</Link><Link to="/food-safety">Food safety</Link><Link to="/about">About</Link><Link to="/contact">Contact</Link><Link to="/privacy">Privacy</Link><Link to="/terms">Terms</Link><Link to="/assistant">Food companion</Link></nav></footer>}</>;
 }
 
 function FoodImage({src,alt,category,className}:{src:string;alt:string;category:string;className?:string}){
