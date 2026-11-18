@@ -350,3 +350,5 @@ button:disabled{cursor:not-allowed;opacity:.58}
 /* Public landing page sign-in access */
 @media(max-width:700px){.topbar .sign-link{display:flex;align-items:center;gap:5px;padding:8px 10px;border:1px solid var(--line);font-size:11px;white-space:nowrap}.topbar .header-right{gap:9px;margin-right:8px}.topbar .location-chip{display:none}.hero-signin{width:100%;justify-content:center}}
 @media(min-width:701px){.topbar .sign-link{padding:10px 13px;border:1px solid var(--line)}.hero-signin{display:none}}
+
+.auth-success{padding:13px 15px;background:#e7efe9;color:#173b2d;border-left:3px solid #1c4a38;font-size:13px;line-height:1.6}.auth-success a{font-weight:700;text-decoration:underline;margin-left:5px}
