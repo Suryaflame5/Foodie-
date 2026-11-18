@@ -344,3 +344,5 @@ button:disabled{cursor:not-allowed;opacity:.58}
 @media (prefers-reduced-motion: reduce) {
   .topbar .nav-links, .topbar .mobile-nav-scrim { transition: none !important; }
 }
+
+.auth-loading{min-height:100dvh;display:grid;place-items:center;padding:24px;text-align:center;color:var(--muted);font-size:13px}
